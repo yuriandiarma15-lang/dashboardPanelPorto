@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portofolio Trading — XAU AI Intelligence</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg:#0E151C;
+    --surface:#161F28;
+    --surface2:#1C2732;
+    --border:#2A3945;
+    --gold:#C6A15B;
+    --gold-bright:#E0C182;
+    --green:#4FAE8E;
+    --green-bg:rgba(79,174,142,0.14);
+    --red:#D9705A;
+    --red-bg:rgba(217,112,90,0.14);
+    --text:#ECE7DD;
+    --muted:#8FA0AC;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    line-height:1.5;
+  }
+  .serif{font-family:'Fraunces',Georgia,serif;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select{font-family:inherit;}
+  a{color:var(--gold);}
+
+  /* ---------- login ---------- */
+  .login-wrap{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(198,161,91,0.08), transparent 45%),
+      var(--bg);
+  }
+  .login-card{
+    width:100%;
+    max-width:380px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:36px 32px;
+  }
+  .login-mark{
+    width:38px;height:3px;background:var(--gold);border-radius:2px;margin-bottom:18px;
+  }
+  .login-card h1{
+    font-family:'Fraunces',Georgia,serif;
+    font-size:1.6rem;
+    font-weight:600;
+    margin:0 0 4px;
+    color:var(--text);
+  }
+  .login-card p.sub{color:var(--muted);margin:0 0 26px;font-size:0.92rem;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:0.82rem;color:var(--muted);margin-bottom:6px;}
+  .field input{
+    width:100%;
+    padding:11px 13px;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    color:var(--text);
+    font-size:0.95rem;
+    outline:none;
+    transition:border-color .15s;
+  }
+  .field input:focus{border-color:var(--gold);}
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    padding:11px 18px;
+    border-radius:8px;
+    border:1px solid transparent;
+    font-size:0.92rem;
+    font-weight:600;
+    transition:opacity .15s, background .15s;
+  }
+  .btn-primary{background:var(--gold);color:#1A1305;width:100%;}
+  .btn-primary:hover{background:var(--gold-bright);}
+  .btn-outline{background:transparent;border-color:var(--border);color:var(--text);}
+  .btn-outline:hover{border-color:var(--gold);color:var(--gold);}
+  .btn-danger{background:transparent;border-color:var(--red);color:var(--red);}
+  .btn-danger:hover{background:var(--red-bg);}
+  .btn-sm{padding:7px 12px;font-size:0.82rem;}
+  .error-text{color:var(--red);font-size:0.85rem;margin-top:-6px;margin-bottom:14px;}
+  .hint{color:var(--muted);font-size:0.78rem;margin-top:16px;}
+
+  /* ---------- app shell ---------- */
+  .app{max-width:1040px;margin:0 auto;padding:20px 20px 60px;}
+  .topbar{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    flex-wrap:wrap;gap:14px;
+    padding-bottom:20px;margin-bottom:20px;
+    border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex;flex-direction:column;}
+  .brand .name{font-family:'Fraunces',Georgia,serif;font-size:1.3rem;font-weight:600;}
+  .brand .role{color:var(--muted);font-size:0.85rem;margin-top:2px;}
+  .clock{text-align:right;}
+  .clock .date{font-size:0.92rem;color:var(--text);}
+  .clock .time{font-family:'Fraunces',Georgia,serif;font-size:1.4rem;color:var(--gold);letter-spacing:0.5px;}
+  .topbar-actions{display:flex;gap:8px;align-items:center;margin-top:6px;}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+  .stat-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:18px 20px;border-top:2px solid var(--gold);
+  }
+  .stat-card .label{color:var(--muted);font-size:0.85rem;margin-bottom:8px;}
+  .stat-card .value{font-family:'Fraunces',Georgia,serif;font-size:1.7rem;font-weight:600;}
+  .pos{color:var(--green);}
+  .neg{color:var(--red);}
+
+  .tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--border);margin-bottom:18px;}
+  .tab{
+    padding:9px 14px;background:transparent;border:none;color:var(--muted);
+    font-size:0.88rem;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+  .custom-range{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:-8px 0 18px;}
+  .custom-range .field{margin-bottom:0;min-width:150px;flex:1;}
+
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+  .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+  .panel-head h2{font-family:'Fraunces',Georgia,serif;font-size:1.15rem;font-weight:600;margin:0;}
+
+  .chart-empty{color:var(--muted);font-size:0.88rem;text-align:center;padding:30px 0;}
+
+  table{width:100%;border-collapse:collapse;}
+  th,td{text-align:left;padding:10px 8px;font-size:0.88rem;border-bottom:1px solid var(--border);}
+  th{color:var(--muted);font-weight:500;}
+  tr:last-child td{border-bottom:none;}
+  .chip{display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.78rem;font-weight:600;}
+  .chip.buy{background:var(--green-bg);color:var(--green);}
+  .chip.sell{background:var(--red-bg);color:var(--red);}
+  .row-empty{color:var(--muted);text-align:center;padding:24px 0;}
+
+  .add-form{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:16px;}
+  .add-form .field.full{grid-column:1/-1;}
+  .form-actions{grid-column:1/-1;display:flex;gap:10px;}
+
+  .member-list-item{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:12px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;
+  }
+  .member-list-item:last-child{border-bottom:none;}
+  .member-list-item .mname{font-weight:600;}
+  .member-list-item .mmeta{color:var(--muted);font-size:0.82rem;}
+
+  @media (max-width:640px){
+    .stat-grid{grid-template-columns:1fr;}
+    .add-form{grid-template-columns:1fr;}
+    .topbar{flex-direction:column;}
+    .clock{text-align:left;}
+    table, thead, tbody, th, td, tr{display:block;}
+    thead{position:absolute;left:-9999px;top:-9999px;}
+    tbody tr{
+      border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:10px;background:var(--surface2);
+    }
+    tbody td{border:none;position:relative;padding:6px 6px 6px 46%;text-align:right;}
+    tbody td::before{
+      content:attr(data-label);position:absolute;left:6px;width:40%;text-align:left;color:var(--muted);
+    }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+const ADMIN_ID = 'admin';
+const ADMIN_PASS = 'GoldAdmin2026';
+
+let state = {
+  screen: 'login',      // login | admin | member
+  loginError: '',
+  members: [],
+  currentMember: null,  // object
+  trades: [],
+  period: 'today',      // today | 7d | month | custom
+  customFrom: '',
+  customTo: '',
+  showAddForm: false,
+  addError: '',
+  showSettings: false
+};
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function todayStr(){
+  const d = new Date();
+  const fmt = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Jakarta', year:'numeric', month:'2-digit', day:'2-digit'});
+  return fmt.format(d); // YYYY-MM-DD
+}
+
+function fmtSigned(n){
+  const v = Math.round(n);
+  const sign = v < 0 ? '-' : '+';
+  return sign + 'Rp' + Math.abs(v).toLocaleString('id-ID');
+}
+function fmtRupiah(n){
+  return 'Rp' + Math.round(n).toLocaleString('id-ID');
+}
+
+/* ---------- storage helpers ---------- */
+async function getJSON(key, shared, fallback){
+  try{
+    const res = await window.storage.get(key, shared);
+    if(!res || res.value === undefined) return fallback;
+    return JSON.parse(res.value);
+  }catch(e){
+    return fallback;
+  }
+}
+async function setJSON(key, shared, value){
+  try{
+    await window.storage.set(key, JSON.stringify(value), shared);
+  }catch(e){
+    console.error('storage set failed', e);
+  }
+}
+
+async function loadMembers(){
+  state.members = await getJSON('members', true, []);
+}
+async function saveMembers(){
+  await setJSON('members', true, state.members);
+}
+async function loadTrades(memberId){
+  state.trades = await getJSON('trades:' + memberId, true, []);
+}
+async function saveTrades(){
+  await setJSON('trades:' + state.currentMember.id, true, state.trades);
+}
+
+/* ---------- clock (updates without full re-render) ---------- */
+function startClock(){
+  updateClock();
+  setInterval(updateClock, 1000);
+}
+function updateClock(){
+  const dEl = document.getElementById('liveDate');
+  const tEl = document.getElementById('liveTime');
+  if(!dEl || !tEl) return;
+  const now = new Date();
+  const dateFmt = new Intl.DateTimeFormat('id-ID', {timeZone:'Asia/Jakarta', weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const timeFmt = new Intl.DateTimeFormat('id-ID', {timeZone:'Asia/Jakarta', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false});
+  dEl.textContent = dateFmt.format(now);
+  tEl.textContent = timeFmt.format(now) + ' WIB';
+}
+
+/* ---------- period filtering ---------- */
+function filteredTrades(){
+  const today = todayStr();
+  let from, to;
+  if(state.period === 'today'){ from = today; to = today; }
+  else if(state.period === '7d'){
+    const d = new Date(today + 'T00:00:00');
+    d.setDate(d.getDate() - 6);
+    from = d.toISOString().slice(0,10); to = today;
+  } else if(state.period === 'month'){
+    from = today.slice(0,8) + '01'; to = today;
+  } else {
+    from = state.customFrom || today; to = state.customTo || today;
+  }
+  return state.trades.filter(t => t.date >= from && t.date <= to)
+    .sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+}
+
+function computeStats(list){
+  const startBal = state.currentMember.startingBalance || 0;
+  let equity = startBal, peak = startBal, maxDD = 0, maxDDPct = 0;
+  const points = [equity];
+  let totalProfit = 0, wins = 0;
+  list.forEach(t => {
+    equity += t.profit;
+    totalProfit += t.profit;
+    if(t.profit > 0) wins++;
+    if(equity > peak) peak = equity;
+    const dd = peak - equity;
+    if(dd > maxDD){ maxDD = dd; maxDDPct = peak > 0 ? (dd/peak*100) : 0; }
+    points.push(equity);
+  });
+  const winRate = list.length ? (wins/list.length*100) : null;
+  return { totalProfit, maxDD, maxDDPct, winRate, points, tradeCount: list.length };
+}
+
+/* ---------- mini equity chart (SVG) ---------- */
+function renderChart(points){
+  if(points.length < 2) return '<div class="chart-empty">Belum ada transaksi pada periode ini.</div>';
+  const w = 600, h = 120, pad = 6;
+  const min = Math.min(...points), max = Math.max(...points);
+  const range = (max - min) || 1;
+  const stepX = (w - pad*2) / (points.length - 1);
+  const coords = points.map((p,i) => {
+    const x = pad + i*stepX;
+    const y = pad + (1 - (p-min)/range) * (h - pad*2);
+    return [x,y];
+  });
+  const line = coords.map(c => c.join(',')).join(' ');
+  const areaPath = 'M' + coords[0][0] + ',' + (h-pad) + ' L' + coords.map(c=>c.join(',')).join(' L') + ' L' + coords[coords.length-1][0] + ',' + (h-pad) + ' Z';
+  return `
+    <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:120px;display:block;">
+      <defs>
+        <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#C6A15B" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#C6A15B" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="${areaPath}" fill="url(#eqGrad)"/>
+      <polyline points="${line}" fill="none" stroke="#C6A15B" stroke-width="2"/>
+    </svg>`;
+}
+
+/* ---------- render root ---------- */
+function render(){
+  const root = document.getElementById('root');
+  if(state.screen === 'login') root.innerHTML = renderLogin();
+  else if(state.screen === 'admin') root.innerHTML = renderAdmin();
+  else root.innerHTML = renderMember();
+  updateClock();
+}
+
+function renderLogin(){
+  return `
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-mark"></div>
+        <h1>Portofolio Trading</h1>
+        <p class="sub">XAU AI Intelligence — masuk dengan ID dan kata sandi Anda.</p>
+        <form onsubmit="handleLogin(event)">
+          <div class="field">
+            <label>ID</label>
+            <input type="text" id="loginId" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label>Kata sandi</label>
+            <input type="password" id="loginPass" autocomplete="current-password" required>
+          </div>
+          ${state.loginError ? `<div class="error-text">${state.loginError}</div>` : ''}
+          <button type="submit" class="btn btn-primary">Masuk</button>
+        </form>
+        <p class="hint">Belum punya akun? Hubungi admin melalui bot langganan.</p>
+      </div>
+    </div>`;
+}
+
+async function handleLogin(e){
+  e.preventDefault();
+  const id = document.getElementById('loginId').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  if(id === ADMIN_ID && pass === ADMIN_PASS){
+    state.screen = 'admin';
+    state.loginError = '';
+    await loadMembers();
+    render();
+    return;
+  }
+  await loadMembers();
+  const found = state.members.find(m => m.id === id && m.password === pass);
+  if(found){
+    state.currentMember = found;
+    state.loginError = '';
+    state.period = 'today';
+    await loadTrades(found.id);
+    state.screen = 'member';
+    render();
+  } else {
+    state.loginError = 'ID atau kata sandi salah.';
+    render();
+  }
+}
+
+function logout(){
+  state = {
+    screen:'login', loginError:'', members:[], currentMember:null, trades:[],
+    period:'today', customFrom:'', customTo:'', showAddForm:false, addError:'', showSettings:false
+  };
+  render();
+}
+
+/* ---------- admin screen ---------- */
+function renderAdmin(){
+  const rows = state.members.map(m => `
+    <div class="member-list-item">
+      <div>
+        <div class="mname">${m.name} <span style="color:var(--muted);font-weight:400;">(${m.id})</span></div>
+        <div class="mmeta">Modal awal: ${fmtRupiah(m.startingBalance||0)} · Dibuat ${m.createdAt}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteMember('${m.id}')">Hapus</button>
+    </div>
+  `).join('') || '<div class="row-empty">Belum ada member.</div>';
+
+  return `
+    <div class="app">
+      <div class="topbar">
+        <div class="brand">
+          <div class="name serif">XAU AI Intelligence</div>
+          <div class="role">Panel admin</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-outline btn-sm" onclick="logout()">Keluar</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Tambah akun member</h2></div>
+        <form class="add-form" onsubmit="handleAddMember(event)">
+          <div class="field">
+            <label>ID (huruf/angka, unik)</label>
+            <input type="text" id="newId" required pattern="[a-zA-Z0-9_]+">
+          </div>
+          <div class="field">
+            <label>Kata sandi</label>
+            <input type="text" id="newPass" required>
+          </div>
+          <div class="field">
+            <label>Nama member</label>
+            <input type="text" id="newName" required>
+          </div>
+          <div class="field">
+            <label>Modal awal (Rp)</label>
+            <input type="number" id="newBalance" value="0" required>
+          </div>
+          ${state.addError ? `<div class="error-text" style="grid-column:1/-1;">${state.addError}</div>` : ''}
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" style="width:auto;">Buat akun</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Daftar member (${state.members.length})</h2></div>
+        ${rows}
+      </div>
+      <p class="hint">Link dashboard sama untuk semua member — bagikan link ini beserta ID dan kata sandi masing-masing lewat bot.</p>
+    </div>`;
+}
+
+async function handleAddMember(e){
+  e.preventDefault();
+  const id = document.getElementById('newId').value.trim();
+  const pass = document.getElementById('newPass').value;
+  const name = document.getElementById('newName').value.trim();
+  const balance = parseFloat(document.getElementById('newBalance').value) || 0;
+  if(id === ADMIN_ID || state.members.some(m => m.id === id)){
+    state.addError = 'ID sudah dipakai, pilih ID lain.';
+    render();
+    return;
+  }
+  state.members.push({ id, password: pass, name, startingBalance: balance, createdAt: todayStr() });
+  await saveMembers();
+  state.addError = '';
+  render();
+}
+
+async function deleteMember(id){
+  state.members = state.members.filter(m => m.id !== id);
+  await saveMembers();
+  try{ await window.storage.delete('trades:' + id, true); }catch(e){}
+  render();
+}
+
+/* ---------- member dashboard ---------- */
+function renderMember(){
+  const list = filteredTrades();
+  const stats = computeStats(list);
+  const m = state.currentMember;
+
+  const periodLabels = { today:'Hari ini', '7d':'7 hari terakhir', month:'Bulan ini', custom:'Rentang tanggal' };
+
+  const customRange = state.period === 'custom' ? `
+    <div class="custom-range">
+      <div class="field">
+        <label>Dari tanggal</label>
+        <input type="date" value="${state.customFrom}" onchange="setCustomRange('from', this.value)">
+      </div>
+      <div class="field">
+        <label>Sampai tanggal</label>
+        <input type="date" value="${state.customTo}" onchange="setCustomRange('to', this.value)">
+      </div>
+    </div>` : '';
+
+  const rows = list.slice().reverse().map(t => `
+    <tr>
+      <td data-label="Tanggal">${t.date}</td>
+      <td data-label="Jam">${t.time || '-'}</td>
+      <td data-label="Pair">${t.pair}</td>
+      <td data-label="Tipe"><span class="chip ${t.type === 'Buy' ? 'buy' : 'sell'}">${t.type}</span></td>
+      <td data-label="Profit/Loss" class="${t.profit >= 0 ? 'pos' : 'neg'}">${fmtSigned(t.profit)}</td>
+      <td data-label="Catatan">${t.note || '-'}</td>
+      <td data-label="Aksi"><button class="btn btn-danger btn-sm" onclick="deleteTrade('${t.id}')">Hapus</button></td>
+    </tr>
+  `).join('') || `<tr><td colspan="7" class="row-empty">Belum ada transaksi pada periode ini.</td></tr>`;
+
+  const addForm = state.showAddForm ? `
+    <form class="add-form" onsubmit="handleAddTrade(event)">
+      <div class="field">
+        <label>Tanggal</label>
+        <input type="date" id="tDate" value="${todayStr()}" required>
+      </div>
+      <div class="field">
+        <label>Jam</label>
+        <input type="time" id="tTime">
+      </div>
+      <div class="field">
+        <label>Pair</label>
+        <input type="text" id="tPair" value="XAUUSD" required>
+      </div>
+      <div class="field">
+        <label>Tipe</label>
+        <select id="tType" style="width:100%;padding:11px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);">
+          <option value="Buy">Buy</option>
+          <option value="Sell">Sell</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Profit/Loss (Rp, isi minus jika rugi)</label>
+        <input type="number" id="tProfit" placeholder="misal 150000 atau -80000" required>
+      </div>
+      <div class="field full">
+        <label>Catatan (opsional)</label>
+        <input type="text" id="tNote">
+      </div>
+      ${state.addError ? `<div class="error-text full" style="grid-column:1/-1;">${state.addError}</div>` : ''}
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" style="width:auto;">Simpan transaksi</button>
+        <button type="button" class="btn btn-outline" onclick="toggleAddForm(false)">Batal</button>
+      </div>
+    </form>` : '';
+
+  const settingsPanel = state.showSettings ? `
+    <div class="panel">
+      <div class="panel-head"><h2>Pengaturan akun</h2></div>
+      <form class="add-form" onsubmit="handleSaveSettings(event)">
+        <div class="field">
+          <label>Modal awal (Rp)</label>
+          <input type="number" id="setBalance" value="${m.startingBalance || 0}" required>
+        </div>
+        <div class="field">
+          <label>Kata sandi baru (kosongkan jika tidak diganti)</label>
+          <input type="text" id="setPass" placeholder="••••••">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" style="width:auto;">Simpan pengaturan</button>
+          <button type="button" class="btn btn-outline" onclick="toggleSettings(false)">Tutup</button>
+        </div>
+      </form>
+    </div>` : '';
+
+  return `
+    <div class="app">
+      <div class="topbar">
+        <div class="brand">
+          <div class="name serif">${m.name}</div>
+          <div class="role">ID: ${m.id}</div>
+        </div>
+        <div>
+          <div class="clock">
+            <div class="date" id="liveDate"></div>
+            <div class="time serif" id="liveTime"></div>
+          </div>
+          <div class="topbar-actions">
+            <button class="btn btn-outline btn-sm" onclick="toggleSettings(true)">Pengaturan</button>
+            <button class="btn btn-outline btn-sm" onclick="logout()">Keluar</button>
+          </div>
+        </div>
+      </div>
+
+      ${settingsPanel}
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="label">Total profit — ${periodLabels[state.period]}</div>
+          <div class="value ${stats.totalProfit >= 0 ? 'pos' : 'neg'}">${fmtSigned(stats.totalProfit)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Drawdown maksimum</div>
+          <div class="value neg">${fmtRupiah(stats.maxDD)} <span style="font-size:1rem;color:var(--muted);">(${stats.maxDDPct.toFixed(1)}%)</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Win rate</div>
+          <div class="value">${stats.winRate === null ? '-' : stats.winRate.toFixed(0) + '%'}</div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab ${state.period==='today'?'active':''}" onclick="setPeriod('today')">Hari ini</button>
+        <button class="tab ${state.period==='7d'?'active':''}" onclick="setPeriod('7d')">7 hari</button>
+        <button class="tab ${state.period==='month'?'active':''}" onclick="setPeriod('month')">Bulan ini</button>
+        <button class="tab ${state.period==='custom'?'active':''}" onclick="setPeriod('custom')">Rentang tanggal</button>
+      </div>
+      ${customRange}
+
+      <div class="panel">
+        <div class="panel-head"><h2>Kurva ekuitas</h2></div>
+        ${renderChart(stats.points)}
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Transaksi (${list.length})</h2>
+          <button class="btn btn-outline btn-sm" onclick="toggleAddForm(${!state.showAddForm})">${state.showAddForm ? 'Tutup form' : '+ Tambah transaksi'}</button>
+        </div>
+        ${addForm}
+        <table>
+          <thead><tr><th>Tanggal</th><th>Jam</th><th>Pair</th><th>Tipe</th><th>Profit/Loss</th><th>Catatan</th><th>Aksi</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function setPeriod(p){
+  state.period = p;
+  if(p === 'custom' && !state.customFrom){
+    state.customFrom = todayStr();
+    state.customTo = todayStr();
+  }
+  render();
+}
+function setCustomRange(which, value){
+  if(which === 'from') state.customFrom = value; else state.customTo = value;
+  render();
+}
+function toggleAddForm(show){
+  state.showAddForm = show;
+  state.addError = '';
+  render();
+}
+function toggleSettings(show){
+  state.showSettings = show;
+  render();
+}
+
+async function handleAddTrade(e){
+  e.preventDefault();
+  const date = document.getElementById('tDate').value;
+  const time = document.getElementById('tTime').value;
+  const pair = document.getElementById('tPair').value.trim() || 'XAUUSD';
+  const type = document.getElementById('tType').value;
+  const profit = parseFloat(document.getElementById('tProfit').value);
+  const note = document.getElementById('tNote').value.trim();
+  if(!date || isNaN(profit)){
+    state.addError = 'Lengkapi tanggal dan nilai profit/loss.';
+    render();
+    return;
+  }
+  state.trades.push({ id: uid(), date, time, pair, type, profit, note });
+  await saveTrades();
+  state.showAddForm = false;
+  state.addError = '';
+  render();
+}
+
+async function deleteTrade(id){
+  state.trades = state.trades.filter(t => t.id !== id);
+  await saveTrades();
+  render();
+}
+
+async function handleSaveSettings(e){
+  e.preventDefault();
+  const balance = parseFloat(document.getElementById('setBalance').value) || 0;
+  const newPass = document.getElementById('setPass').value.trim();
+  state.currentMember.startingBalance = balance;
+  if(newPass) state.currentMember.password = newPass;
+  await loadMembers();
+  const idx = state.members.findIndex(m => m.id === state.currentMember.id);
+  if(idx >= 0) state.members[idx] = state.currentMember;
+  await saveMembers();
+  state.showSettings = false;
+  render();
+}
+
+render();
+startClock();
+</script>
+</body>
+</html>
