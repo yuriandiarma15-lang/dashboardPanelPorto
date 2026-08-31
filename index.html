@@ -37,7 +37,6 @@
     padding:0 20px 80px;
   }
 
-  /* Header */
   header{
     padding:44px 0 28px;
     text-align:center;
@@ -61,462 +60,193 @@
     margin:0 0 8px;
     color:var(--paper);
   }
-  h1 em{
-    font-style:italic;
-    color:var(--brass);
-  }
-  .tagline{
-    font-size:13.5px;
-    color:var(--paper-dim);
-    margin:0;
-  }
+  h1 em{ font-style:italic; color:var(--brass); }
+  .tagline{ font-size:13.5px; color:var(--paper-dim); margin:0; }
   .admin-toggle{
-    position:absolute;
-    top:16px;right:0;
-    font-size:12px;
-    color:var(--paper-dim);
-    background:none;border:none;
-    cursor:pointer;
+    position:absolute; top:16px; right:0;
+    font-size:12px; color:var(--paper-dim);
+    background:none; border:none; cursor:pointer;
     letter-spacing:0.3px;
-    text-decoration:underline;
-    text-underline-offset:3px;
+    text-decoration:underline; text-underline-offset:3px;
     text-decoration-color:var(--hairline-strong);
   }
-  .admin-toggle:hover{color:var(--brass);}
+  .admin-toggle:hover{ color:var(--brass); }
   .admin-pill{
-    position:absolute;
-    top:14px;right:0;
-    font-size:11px;
-    color:var(--win);
+    position:absolute; top:14px; right:0;
+    font-size:11px; color:var(--win);
     border:1px solid rgba(122,139,111,0.4);
-    padding:4px 10px;
-    border-radius:20px;
+    padding:4px 10px; border-radius:20px;
+    background:none; cursor:pointer;
   }
 
-  /* Tabs */
   .tabs{
-    display:flex;
-    margin-top:28px;
+    display:flex; margin-top:28px;
     border:1px solid var(--hairline-strong);
-    border-radius:8px;
-    overflow:hidden;
+    border-radius:8px; overflow:hidden;
   }
   .tab{
-    flex:1;
-    padding:12px 0;
-    text-align:center;
-    background:none;
-    border:none;
-    color:var(--paper-dim);
-    font-family:'Inter',sans-serif;
-    font-size:14px;
-    cursor:pointer;
+    flex:1; padding:12px 0; text-align:center;
+    background:none; border:none; color:var(--paper-dim);
+    font-family:'Inter',sans-serif; font-size:14px; cursor:pointer;
     letter-spacing:0.2px;
   }
-  .tab + .tab{border-left:1px solid var(--hairline-strong);}
-  .tab.active{background:var(--surface-raised);color:var(--brass);}
+  .tab + .tab{ border-left:1px solid var(--hairline-strong); }
+  .tab.active{ background:var(--surface-raised); color:var(--brass); }
 
-  /* Picker row */
   .picker-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    margin-top:22px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; margin-top:22px;
   }
-  .picker-row input[type=date],
-  .picker-row input[type=month]{
-    background:var(--surface);
-    border:1px solid var(--hairline-strong);
-    color:var(--paper);
-    font-family:'IBM Plex Mono',monospace;
-    font-size:14px;
-    padding:10px 12px;
-    border-radius:6px;
-    flex:1;
+  .picker-row input[type=date], .picker-row input[type=month]{
+    background:var(--surface); border:1px solid var(--hairline-strong);
+    color:var(--paper); font-family:'IBM Plex Mono',monospace;
+    font-size:14px; padding:10px 12px; border-radius:6px; flex:1;
   }
   .nav-btn{
-    background:var(--surface);
-    border:1px solid var(--hairline-strong);
-    color:var(--paper-dim);
-    width:38px;height:38px;
-    border-radius:6px;
-    font-size:16px;
-    cursor:pointer;
-    flex-shrink:0;
+    background:var(--surface); border:1px solid var(--hairline-strong);
+    color:var(--paper-dim); width:38px; height:38px; border-radius:6px;
+    font-size:16px; cursor:pointer; flex-shrink:0;
   }
-  .nav-btn:hover{color:var(--brass);border-color:var(--brass-dim);}
-  .latest-badge{
-    display:inline-block;
-    margin-top:10px;
-    font-size:11.5px;
-    color:var(--win);
-    letter-spacing:0.2px;
-  }
+  .nav-btn:hover{ color:var(--brass); border-color:var(--brass-dim); }
+  .latest-badge{ display:inline-block; margin-top:10px; font-size:11.5px; color:var(--win); letter-spacing:0.2px; }
 
-  /* Hero stat */
-  .hero-stat{
-    margin-top:30px;
-    text-align:center;
-    padding:34px 0 10px;
-  }
+  .hero-stat{ margin-top:30px; text-align:center; padding:34px 0 10px; }
   .hero-num{
-    font-family:'Fraunces',serif;
-    font-weight:500;
-    font-size:clamp(56px,18vw,76px);
-    color:var(--brass);
-    line-height:1;
+    font-family:'Fraunces',serif; font-weight:500;
+    font-size:clamp(56px,18vw,76px); color:var(--brass); line-height:1;
   }
-  .hero-num .pct{font-size:0.45em;color:var(--brass-dim);margin-left:2px;}
-  .hero-label{
-    font-size:13px;
-    color:var(--paper-dim);
-    margin-top:6px;
-  }
-  .hero-sub{
-    font-size:12.5px;
-    color:var(--paper-dim);
-    margin-top:4px;
-  }
+  .hero-num .pct{ font-size:0.45em; color:var(--brass-dim); margin-left:2px; }
+  .hero-label{ font-size:13px; color:var(--paper-dim); margin-top:6px; }
+  .hero-sub{ font-size:12.5px; color:var(--paper-dim); margin-top:4px; }
 
-  /* Stat grid */
   .stat-grid{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    border-top:1px solid var(--hairline);
-    border-bottom:1px solid var(--hairline);
+    display:grid; grid-template-columns:repeat(4,1fr);
+    border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
     margin-top:20px;
   }
-  .stat-cell{
-    text-align:center;
-    padding:18px 4px;
-    border-left:1px solid var(--hairline);
-  }
-  .stat-cell:first-child{border-left:none;}
-  .stat-cell .num{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:19px;
-    font-weight:600;
-    color:var(--paper);
-  }
-  .stat-cell.tp .num{color:var(--win);}
-  .stat-cell.sl .num{color:var(--loss);}
-  .stat-cell .lbl{
-    font-size:10.5px;
-    color:var(--paper-dim);
-    margin-top:4px;
-    letter-spacing:0.3px;
-  }
+  .stat-cell{ text-align:center; padding:18px 4px; border-left:1px solid var(--hairline); }
+  .stat-cell:first-child{ border-left:none; }
+  .stat-cell .num{ font-family:'IBM Plex Mono',monospace; font-size:19px; font-weight:600; color:var(--paper); }
+  .stat-cell.tp .num{ color:var(--win); }
+  .stat-cell.sl .num{ color:var(--loss); }
+  .stat-cell .lbl{ font-size:10.5px; color:var(--paper-dim); margin-top:4px; letter-spacing:0.3px; }
 
-  /* PnL line */
-  .pnl-line{
-    text-align:center;
-    margin-top:14px;
-    font-size:13px;
-    color:var(--paper-dim);
-  }
-  .pnl-line .val{
-    font-family:'IBM Plex Mono',monospace;
-    font-weight:600;
-  }
-  .pnl-line .val.pos{color:var(--win);}
-  .pnl-line .val.neg{color:var(--loss);}
+  .pnl-line{ text-align:center; margin-top:14px; font-size:13px; color:var(--paper-dim); }
+  .pnl-line .val{ font-family:'IBM Plex Mono',monospace; font-weight:600; }
+  .pnl-line .val.pos{ color:var(--win); }
+  .pnl-line .val.neg{ color:var(--loss); }
 
-  /* Signals list (public) */
-  .signals-section{margin-top:32px;}
-  .signals-title{
-    font-size:12px;
-    color:var(--paper-dim);
-    letter-spacing:0.3px;
-    margin-bottom:10px;
-  }
+  .signals-section{ margin-top:32px; }
+  .signals-title{ font-size:12px; color:var(--paper-dim); letter-spacing:0.3px; margin-bottom:10px; }
   .signal-row{
-    display:grid;
-    grid-template-columns:52px 44px 1fr 52px 64px;
-    gap:8px;
-    align-items:center;
-    padding:10px 0;
-    border-bottom:1px solid var(--hairline);
-    font-family:'IBM Plex Mono',monospace;
-    font-size:12px;
+    display:grid; grid-template-columns:52px 44px 1fr 52px 64px; gap:8px;
+    align-items:center; padding:10px 0; border-bottom:1px solid var(--hairline);
+    font-family:'IBM Plex Mono',monospace; font-size:12px;
   }
-  .signal-row.head{
-    color:var(--paper-dim);
-    font-size:10.5px;
-    letter-spacing:0.3px;
-    border-bottom:1px solid var(--hairline-strong);
-  }
-  .signal-row .dir{font-size:11px;}
-  .signal-row .dir.buy{color:var(--win);}
-  .signal-row .dir.sell{color:var(--loss);}
-  .signal-row .res{text-align:center;font-size:11px;}
-  .signal-row .res.tp{color:var(--win);}
-  .signal-row .res.sl{color:var(--loss);}
-  .signal-row .pnl{text-align:right;}
-  .signal-row .pnl.pos{color:var(--win);}
-  .signal-row .pnl.neg{color:var(--loss);}
-  .signals-empty{
-    padding:24px 0;
-    text-align:center;
-    color:var(--paper-dim);
-    font-size:13px;
-  }
+  .signal-row.head{ color:var(--paper-dim); font-size:10.5px; letter-spacing:0.3px; border-bottom:1px solid var(--hairline-strong); }
+  .signal-row .dir{ font-size:11px; }
+  .signal-row .dir.buy{ color:var(--win); }
+  .signal-row .dir.sell{ color:var(--loss); }
+  .signal-row .res{ text-align:center; font-size:11px; }
+  .signal-row .res.tp{ color:var(--win); }
+  .signal-row .res.sl{ color:var(--loss); }
+  .signal-row .pnl{ text-align:right; }
+  .signal-row .pnl.pos{ color:var(--win); }
+  .signal-row .pnl.neg{ color:var(--loss); }
+  .signals-empty{ padding:24px 0; text-align:center; color:var(--paper-dim); font-size:13px; }
 
-  /* Admin signal form */
-  .admin-signal-form{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-bottom:14px;
-  }
+  .admin-signal-form{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
   .admin-signal-form select{
-    width:100%;
-    background:var(--surface);
-    border:1px solid var(--hairline-strong);
-    color:var(--paper);
-    font-family:'IBM Plex Mono',monospace;
-    font-size:14px;
-    padding:10px 12px;
-    border-radius:6px;
+    width:100%; background:var(--surface); border:1px solid var(--hairline-strong);
+    color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:14px;
+    padding:10px 12px; border-radius:6px;
   }
-  .admin-signal-list{margin-top:16px;}
+  .admin-signal-list{ margin-top:16px; }
   .admin-signal-item{
-    display:grid;
-    grid-template-columns:52px 44px 1fr 52px 64px 26px;
-    gap:8px;
-    align-items:center;
-    padding:9px 0;
-    border-bottom:1px solid var(--hairline);
-    font-family:'IBM Plex Mono',monospace;
-    font-size:12px;
+    display:grid; grid-template-columns:52px 44px 1fr 52px 64px 26px; gap:8px;
+    align-items:center; padding:9px 0; border-bottom:1px solid var(--hairline);
+    font-family:'IBM Plex Mono',monospace; font-size:12px;
   }
-  .del-btn{
-    background:none;border:none;
-    color:var(--loss);
-    cursor:pointer;
-    font-size:15px;
-    text-align:right;
-  }
-  .admin-divider{
-    margin:26px 0 20px;
-    border:none;
-    border-top:1px solid var(--hairline-strong);
-  }
+  .del-btn{ background:none; border:none; color:var(--loss); cursor:pointer; font-size:15px; text-align:right; }
+  .admin-divider{ margin:26px 0 20px; border:none; border-top:1px solid var(--hairline-strong); }
 
-  /* Screenshot */
-  .shot-section{margin-top:32px;}
+  .shot-section{ margin-top:32px; }
   .shot-title{
-    font-size:12px;
-    color:var(--paper-dim);
-    letter-spacing:0.3px;
-    margin-bottom:10px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+    font-size:12px; color:var(--paper-dim); letter-spacing:0.3px; margin-bottom:10px;
+    display:flex; justify-content:space-between; align-items:center;
   }
-  .shot-frame{
-    border:1px solid var(--hairline-strong);
-    border-radius:8px;
-    overflow:hidden;
-    background:var(--surface);
-  }
-  .shot-frame img{
-    width:100%;
-    display:block;
-  }
+  .shot-frame{ border:1px solid var(--hairline-strong); border-radius:8px; overflow:hidden; background:var(--surface); }
+  .shot-frame img{ width:100%; display:block; }
   .shot-empty{
-    padding:40px 16px;
-    text-align:center;
-    color:var(--paper-dim);
-    font-size:13px;
-    border:1px dashed var(--hairline-strong);
-    border-radius:8px;
+    padding:40px 16px; text-align:center; color:var(--paper-dim); font-size:13px;
+    border:1px dashed var(--hairline-strong); border-radius:8px;
   }
 
-  /* Monthly ledger */
-  .ledger{
-    margin-top:24px;
-  }
+  .ledger{ margin-top:24px; }
   .ledger-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:14px 0;
-    border-bottom:1px solid var(--hairline);
-    cursor:pointer;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 0; border-bottom:1px solid var(--hairline); cursor:pointer;
   }
-  .ledger-row:hover .ledger-date{color:var(--brass);}
-  .ledger-date{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:13.5px;
-    color:var(--paper);
-  }
-  .ledger-mid{
-    display:flex;
-    gap:14px;
-    font-family:'IBM Plex Mono',monospace;
-    font-size:12.5px;
-    color:var(--paper-dim);
-  }
-  .ledger-win{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:13.5px;
-    color:var(--win);
-    min-width:48px;
-    text-align:right;
-  }
-  .ledger-empty{
-    padding:30px 0;
-    text-align:center;
-    color:var(--paper-dim);
-    font-size:13px;
-  }
+  .ledger-row:hover .ledger-date{ color:var(--brass); }
+  .ledger-date{ font-family:'IBM Plex Mono',monospace; font-size:13.5px; color:var(--paper); }
+  .ledger-mid{ display:flex; gap:14px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--paper-dim); }
+  .ledger-win{ font-family:'IBM Plex Mono',monospace; font-size:13.5px; color:var(--win); min-width:48px; text-align:right; }
+  .ledger-empty{ padding:30px 0; text-align:center; color:var(--paper-dim); font-size:13px; }
 
-  /* Admin panel */
   .admin-panel{
-    margin-top:32px;
-    border:1px solid rgba(184,148,79,0.3);
-    border-radius:10px;
-    padding:20px;
-    background:rgba(184,148,79,0.04);
+    margin-top:32px; border:1px solid rgba(184,148,79,0.3); border-radius:10px;
+    padding:20px; background:rgba(184,148,79,0.04);
   }
-  .admin-panel h3{
-    font-family:'Fraunces',serif;
-    font-weight:500;
-    font-size:16px;
-    color:var(--brass);
-    margin:0 0 16px;
-  }
-  .field{margin-bottom:14px;}
-  .field label{
-    display:block;
-    font-size:11.5px;
-    color:var(--paper-dim);
-    margin-bottom:6px;
-    letter-spacing:0.2px;
-  }
+  .admin-panel h3{ font-family:'Fraunces',serif; font-weight:500; font-size:16px; color:var(--brass); margin:0 0 16px; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:11.5px; color:var(--paper-dim); margin-bottom:6px; letter-spacing:0.2px; }
   .field input[type=number], .field input[type=text], .field input[type=password]{
-    width:100%;
-    background:var(--surface);
-    border:1px solid var(--hairline-strong);
-    color:var(--paper);
-    font-family:'IBM Plex Mono',monospace;
-    font-size:14px;
-    padding:10px 12px;
-    border-radius:6px;
+    width:100%; background:var(--surface); border:1px solid var(--hairline-strong);
+    color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:14px;
+    padding:10px 12px; border-radius:6px;
   }
-  .field-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
   .file-btn{
-    display:inline-block;
-    padding:10px 16px;
-    background:var(--surface);
-    border:1px solid var(--hairline-strong);
-    border-radius:6px;
-    font-size:13px;
-    color:var(--paper);
-    cursor:pointer;
+    display:inline-block; padding:10px 16px; background:var(--surface);
+    border:1px solid var(--hairline-strong); border-radius:6px; font-size:13px;
+    color:var(--paper); cursor:pointer;
   }
-  .file-btn:hover{border-color:var(--brass-dim);}
+  .file-btn:hover{ border-color:var(--brass-dim); }
   .btn-primary{
-    width:100%;
-    padding:13px 0;
-    background:var(--brass);
-    border:none;
-    border-radius:6px;
-    color:var(--ink);
-    font-family:'Inter',sans-serif;
-    font-weight:600;
-    font-size:14px;
-    cursor:pointer;
-    margin-top:6px;
+    width:100%; padding:13px 0; background:var(--brass); border:none; border-radius:6px;
+    color:var(--ink); font-family:'Inter',sans-serif; font-weight:600; font-size:14px; cursor:pointer; margin-top:6px;
   }
-  .btn-primary:hover{background:#c9a35d;}
+  .btn-primary:hover{ background:#c9a35d; }
   .btn-ghost{
-    width:100%;
-    padding:11px 0;
-    background:none;
-    border:1px solid var(--hairline-strong);
-    border-radius:6px;
-    color:var(--paper-dim);
-    font-size:13px;
-    cursor:pointer;
-    margin-top:8px;
+    width:100%; padding:11px 0; background:none; border:1px solid var(--hairline-strong);
+    border-radius:6px; color:var(--paper-dim); font-size:13px; cursor:pointer; margin-top:8px;
   }
-  .save-msg{
-    font-size:12px;
-    color:var(--win);
-    margin-top:10px;
-    min-height:14px;
-  }
+  .save-msg{ font-size:12px; color:var(--win); margin-top:10px; min-height:14px; }
 
-  /* Modal */
   .modal-bg{
-    position:fixed;inset:0;
-    background:rgba(20,17,15,0.7);
-    display:flex;align-items:center;justify-content:center;
-    padding:20px;
-    z-index:50;
+    position:fixed; inset:0; background:rgba(20,17,15,0.7);
+    display:flex; align-items:center; justify-content:center; padding:20px; z-index:50;
   }
-  .modal{
-    background:var(--surface-raised);
-    border:1px solid var(--hairline-strong);
-    border-radius:10px;
-    padding:26px;
-    width:100%;
-    max-width:340px;
-  }
-  .modal h3{
-    font-family:'Fraunces',serif;
-    font-weight:500;
-    font-size:17px;
-    margin:0 0 16px;
-    color:var(--paper);
-  }
-  .modal .error{color:var(--loss);font-size:12px;margin-top:8px;min-height:14px;}
+  .modal{ background:var(--surface-raised); border:1px solid var(--hairline-strong); border-radius:10px; padding:26px; width:100%; max-width:340px; }
+  .modal h3{ font-family:'Fraunces',serif; font-weight:500; font-size:17px; margin:0 0 16px; color:var(--paper); }
+  .modal .error{ color:var(--loss); font-size:12px; margin-top:8px; min-height:14px; }
 
-  footer{
-    margin-top:50px;
-    text-align:center;
-    font-size:11.5px;
-    color:var(--paper-dim);
-    line-height:1.6;
-  }
+  footer{ margin-top:50px; text-align:center; font-size:11.5px; color:var(--paper-dim); line-height:1.6; }
 
-  /* CTA */
-  .cta-wrap{
-    margin-top:40px;
-    text-align:center;
-  }
+  .cta-wrap{ margin-top:40px; text-align:center; }
   .cta-btn{
-    display:inline-block;
-    background:var(--brass);
-    color:var(--ink);
-    font-family:'Inter',sans-serif;
-    font-weight:600;
-    font-size:15px;
-    letter-spacing:0.2px;
-    padding:16px 32px;
-    border-radius:8px;
-    text-decoration:none;
-    width:100%;
-    max-width:360px;
+    display:inline-block; background:var(--brass); color:var(--ink);
+    font-family:'Inter',sans-serif; font-weight:600; font-size:15px; letter-spacing:0.2px;
+    padding:16px 32px; border-radius:8px; text-decoration:none; width:100%; max-width:360px;
   }
-  .cta-btn:hover{background:#c9a35d;}
-  .cta-sub{
-    margin-top:10px;
-    font-size:12px;
-    color:var(--paper-dim);
-  }
+  .cta-btn:hover{ background:#c9a35d; }
+  .cta-sub{ margin-top:10px; font-size:12px; color:var(--paper-dim); }
 
   @media (max-width:420px){
-    .field-row{grid-template-columns:1fr 1fr;}
-    .field-row .field:last-child{grid-column:span 2;}
-    .stat-grid{grid-template-columns:repeat(2,1fr);}
-    .stat-cell:nth-child(3){border-left:none;}
-    .signal-row{grid-template-columns:40px 38px 1fr 42px 52px;font-size:11px;}
-    .admin-signal-item{grid-template-columns:40px 38px 1fr 42px 52px 22px;font-size:11px;}
-    .admin-signal-form{grid-template-columns:1fr;}
-    .admin-signal-form .field{grid-column:span 1 !important;}
+    .stat-grid{ grid-template-columns:repeat(2,1fr); }
+    .stat-cell:nth-child(3){ border-left:none; }
+    .signal-row{ grid-template-columns:40px 38px 1fr 42px 52px; font-size:11px; }
+    .admin-signal-item{ grid-template-columns:40px 38px 1fr 42px 52px 22px; font-size:11px; }
+    .admin-signal-form{ grid-template-columns:1fr; }
   }
 </style>
 </head>
@@ -547,28 +277,16 @@
     <div class="hero-stat">
       <div class="hero-num" id="heroWinrate">—<span class="pct">%</span></div>
       <div class="hero-label">Winrate periode sinyal</div>
-      <div class="hero-sub" id="heroPeriod">07:00 — 02:00 WIB</div>
+      <div class="hero-sub" id="heroPeriod">07.00 — 02.00 WIB</div>
     </div>
 
     <div class="stat-grid">
-      <div class="stat-cell">
-        <div class="num" id="statTotal">0</div>
-        <div class="lbl">Total Signal</div>
-      </div>
-      <div class="stat-cell tp">
-        <div class="num" id="statTp1">0</div>
-        <div class="lbl">TP 1</div>
-      </div>
-      <div class="stat-cell tp">
-        <div class="num" id="statTp2">0</div>
-        <div class="lbl">TP 2</div>
-      </div>
-      <div class="stat-cell sl">
-        <div class="num" id="statSl">0</div>
-        <div class="lbl">SL</div>
-      </div>
+      <div class="stat-cell"><div class="num" id="statTotal">0</div><div class="lbl">Total Signal</div></div>
+      <div class="stat-cell tp"><div class="num" id="statTp1">0</div><div class="lbl">TP 1</div></div>
+      <div class="stat-cell tp"><div class="num" id="statTp2">0</div><div class="lbl">TP 2</div></div>
+      <div class="stat-cell sl"><div class="num" id="statSl">0</div><div class="lbl">SL</div></div>
     </div>
-    <div class="pnl-line">Total PnL periode: <span class="val" id="statPnl">0</span></div>
+    <div class="pnl-line">Total PnL periode: <span class="val" id="statPnl">$0</span></div>
 
     <div class="signals-section">
       <div class="signals-title">Rincian sinyal</div>
@@ -597,24 +315,12 @@
     </div>
 
     <div class="stat-grid">
-      <div class="stat-cell">
-        <div class="num" id="monthTotal">0</div>
-        <div class="lbl">Total Signal</div>
-      </div>
-      <div class="stat-cell tp">
-        <div class="num" id="monthTp1">0</div>
-        <div class="lbl">TP 1</div>
-      </div>
-      <div class="stat-cell tp">
-        <div class="num" id="monthTp2">0</div>
-        <div class="lbl">TP 2</div>
-      </div>
-      <div class="stat-cell sl">
-        <div class="num" id="monthSl">0</div>
-        <div class="lbl">SL</div>
-      </div>
+      <div class="stat-cell"><div class="num" id="monthTotal">0</div><div class="lbl">Total Signal</div></div>
+      <div class="stat-cell tp"><div class="num" id="monthTp1">0</div><div class="lbl">TP 1</div></div>
+      <div class="stat-cell tp"><div class="num" id="monthTp2">0</div><div class="lbl">TP 2</div></div>
+      <div class="stat-cell sl"><div class="num" id="monthSl">0</div><div class="lbl">SL</div></div>
     </div>
-    <div class="pnl-line">Total PnL bulan ini: <span class="val" id="monthPnl">0</span></div>
+    <div class="pnl-line">Total PnL bulan ini: <span class="val" id="monthPnl">$0</span></div>
 
     <div class="ledger" id="ledgerList"></div>
   </div>
@@ -625,7 +331,7 @@
   </div>
 
   <footer>
-    Setiap periode sinyal berjalan pukul 07:00 hingga 02:00 WIB keesokan harinya,<br>
+    Setiap periode sinyal berjalan pukul 07.00 hingga 02.00 WIB keesokan harinya,<br>
     dengan rata-rata 20 sinyal per periode.
   </footer>
 </div>
@@ -638,7 +344,7 @@ const state = {
   selectedDate: null,
   selectedMonth: null,
   isAdmin: false,
-  cache: {}
+  adminPassword: null
 };
 
 function pad(n){ return n.toString().padStart(2,'0'); }
@@ -652,39 +358,39 @@ function fmtDateLabel(dateStr){
   return days[dt.getDay()]+', '+d+' '+months[m-1]+' '+y;
 }
 
-async function loadDay(dateStr){
-  if(state.cache[dateStr]) return state.cache[dateStr];
-  try{
-    const res = await window.storage.get('signal-day:'+dateStr, true);
-    const val = res ? JSON.parse(res.value) : null;
-    state.cache[dateStr] = val;
-    return val;
-  }catch(e){
-    state.cache[dateStr] = null;
-    return null;
+// ---------- API HELPERS ----------
+async function apiGet(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('Request gagal');
+  return res.json();
+}
+async function apiWrite(url, method, body){
+  const res = await fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-password': state.adminPassword || ''
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined
+  });
+  if(!res.ok){
+    const err = await res.json().catch(()=>({error:'Gagal menyimpan'}));
+    throw new Error(err.error || 'Gagal menyimpan');
   }
+  return res.json();
 }
 
-async function saveDay(dateStr, data){
-  await window.storage.set('signal-day:'+dateStr, JSON.stringify(data), true);
-  state.cache[dateStr] = data;
+async function loadDay(dateStr){
+  try{ return await apiGet('/api/day/'+dateStr); }
+  catch(e){ return {signals:[], screenshot:null}; }
 }
-
 async function findLatestDate(){
-  try{
-    const res = await window.storage.list('signal-day:', true);
-    if(!res || !res.keys || res.keys.length===0) return null;
-    const dates = res.keys.map(k=>k.replace('signal-day:','')).sort();
-    return dates[dates.length-1];
-  }catch(e){ return null; }
+  try{ const d = await apiGet('/api/latest'); return d.date; }
+  catch(e){ return null; }
 }
-
-async function listDatesInMonth(monthStr){
-  try{
-    const res = await window.storage.list('signal-day:'+monthStr, true);
-    if(!res || !res.keys) return [];
-    return res.keys.map(k=>k.replace('signal-day:','')).sort();
-  }catch(e){ return []; }
+async function loadMonth(monthStr){
+  try{ return await apiGet('/api/month/'+monthStr); }
+  catch(e){ return {}; }
 }
 
 function computeStats(signals){
@@ -699,8 +405,10 @@ function computeStats(signals){
 }
 
 function fmtPnl(val){
-  const sign = val>0 ? '+' : '';
-  return sign + (Math.round(val*100)/100);
+  const abs = Math.abs(Math.round(val*100)/100);
+  if(val > 0) return '+$'+abs;
+  if(val < 0) return '-$'+abs;
+  return '$0';
 }
 function pnlClass(val){ return val>0 ? 'pos' : (val<0 ? 'neg' : ''); }
 
@@ -710,10 +418,10 @@ async function renderDaily(){
   document.getElementById('dateInput').value = dateStr;
 
   const latest = await findLatestDate();
-  const badgeWrap = document.getElementById('latestBadgeWrap');
-  badgeWrap.innerHTML = (latest === dateStr) ? '<span class="latest-badge">● Tanggal terupdate</span>' : '';
+  document.getElementById('latestBadgeWrap').innerHTML =
+    (latest === dateStr) ? '<span class="latest-badge">● Tanggal terupdate</span>' : '';
 
-  const data = await loadDay(dateStr) || {signals:[], screenshot:null};
+  const data = await loadDay(dateStr);
   const stats = computeStats(data.signals);
 
   document.getElementById('heroWinrate').innerHTML = stats.winrate+'<span class="pct">%</span>';
@@ -721,7 +429,7 @@ async function renderDaily(){
   document.getElementById('statTp1').textContent = stats.tp1;
   document.getElementById('statTp2').textContent = stats.tp2;
   document.getElementById('statSl').textContent = stats.sl;
-  document.getElementById('heroPeriod').textContent = fmtDateLabel(dateStr) + ' · 07:00 — 02:00 WIB';
+  document.getElementById('heroPeriod').textContent = fmtDateLabel(dateStr) + ' · 07.00 — 02.00 WIB';
 
   const pnlEl = document.getElementById('statPnl');
   pnlEl.textContent = fmtPnl(stats.totalPnl);
@@ -730,11 +438,9 @@ async function renderDaily(){
   renderSignalsList(data.signals || []);
 
   const shotWrap = document.getElementById('shotWrap');
-  if(data.screenshot){
-    shotWrap.innerHTML = '<div class="shot-frame"><img src="'+data.screenshot+'"></div>';
-  }else{
-    shotWrap.innerHTML = '<div class="shot-empty">Belum ada screenshot untuk tanggal ini</div>';
-  }
+  shotWrap.innerHTML = data.screenshot
+    ? '<div class="shot-frame"><img src="'+data.screenshot+'"></div>'
+    : '<div class="shot-empty">Belum ada screenshot untuk tanggal ini</div>';
 
   renderAdminDailyPanel(data);
 }
@@ -746,16 +452,16 @@ function renderSignalsList(signals){
     return;
   }
   const sorted = [...signals].sort((a,b)=> (a.time||'').localeCompare(b.time||''));
-  const head = `<div class="signal-row head"><span>Jam</span><span>Arah</span><span>Entry</span><span>Hasil</span><span style="text-align:right;">PnL</span></div>`;
+  const head = '<div class="signal-row head"><span>Jam</span><span>Arah</span><span>Entry</span><span>Hasil</span><span style="text-align:right;">PnL</span></div>';
   const rows = sorted.map(s=>{
     const resClass = s.result==='SL' ? 'sl' : 'tp';
-    return `<div class="signal-row">
-      <span>${s.time||'-'}</span>
-      <span class="dir ${s.direction==='SELL'?'sell':'buy'}">${s.direction}</span>
-      <span>${s.entryPrice||'-'}</span>
-      <span class="res ${resClass}">${s.result}</span>
-      <span class="pnl ${pnlClass(parseFloat(s.pnl)||0)}">${fmtPnl(parseFloat(s.pnl)||0)}</span>
-    </div>`;
+    return '<div class="signal-row">'
+      + '<span>'+(s.time||'-')+'</span>'
+      + '<span class="dir '+(s.direction==='SELL'?'sell':'buy')+'">'+s.direction+'</span>'
+      + '<span>'+(s.entryPrice||'-')+'</span>'
+      + '<span class="res '+resClass+'">'+s.result+'</span>'
+      + '<span class="pnl '+pnlClass(parseFloat(s.pnl)||0)+'">'+fmtPnl(parseFloat(s.pnl)||0)+'</span>'
+      + '</div>';
   }).join('');
   wrap.innerHTML = head + rows;
 }
@@ -771,8 +477,8 @@ function renderAdminDailyPanel(data){
       <h3>Tambah sinyal — ${fmtDateLabel(state.selectedDate)}</h3>
       <div class="admin-signal-form">
         <div class="field">
-          <label>Jam</label>
-          <input type="text" id="inTime" placeholder="07:15">
+          <label>Jam (contoh: 07.00)</label>
+          <input type="text" id="inTime" placeholder="07.00">
         </div>
         <div class="field">
           <label>Arah</label>
@@ -782,8 +488,8 @@ function renderAdminDailyPanel(data){
           </select>
         </div>
         <div class="field">
-          <label>Harga Entry</label>
-          <input type="text" id="inEntryPrice" placeholder="2385.40">
+          <label>Harga Entry (contoh: 3522)</label>
+          <input type="text" inputmode="numeric" id="inEntryPrice" placeholder="3522">
         </div>
         <div class="field">
           <label>Hasil</label>
@@ -794,7 +500,7 @@ function renderAdminDailyPanel(data){
           </select>
         </div>
         <div class="field" style="grid-column:span 2;">
-          <label>PnL (boleh minus, contoh: -12.5 atau 25)</label>
+          <label>PnL dalam $ (boleh minus, contoh: -12.5 atau 25)</label>
           <input type="number" step="any" id="inPnl" placeholder="0">
         </div>
       </div>
@@ -831,20 +537,15 @@ function renderAdminDailyPanel(data){
       return;
     }
 
-    const newSignal = { id: Date.now().toString(36), time, direction, entryPrice, result, pnl: parseFloat(pnl) };
-    const current = await loadDay(state.selectedDate) || {signals:[], screenshot:null};
-    current.signals = [...(current.signals||[]), newSignal];
-    current.updatedAt = Date.now();
-
     try{
-      await saveDay(state.selectedDate, current);
+      await apiWrite('/api/day/'+state.selectedDate+'/signal', 'POST', { time, direction, entryPrice, result, pnl });
       msg.textContent = 'Signal ditambahkan.';
       document.getElementById('inTime').value='';
       document.getElementById('inEntryPrice').value='';
       document.getElementById('inPnl').value='';
       renderDaily();
     }catch(e){
-      msg.textContent = 'Gagal menyimpan, coba lagi.';
+      msg.textContent = e.message || 'Gagal menyimpan, coba lagi.';
     }
   });
 
@@ -860,15 +561,12 @@ function renderAdminDailyPanel(data){
 
   document.getElementById('saveShotBtn').addEventListener('click', async ()=>{
     const msg = document.getElementById('saveShotMsg');
-    const current = await loadDay(state.selectedDate) || {signals:[], screenshot:null};
-    current.screenshot = pendingScreenshot;
-    current.updatedAt = Date.now();
     try{
-      await saveDay(state.selectedDate, current);
+      await apiWrite('/api/day/'+state.selectedDate+'/screenshot', 'POST', { screenshot: pendingScreenshot });
       msg.textContent = 'Screenshot tersimpan.';
       renderDaily();
     }catch(e){
-      msg.textContent = 'Gagal menyimpan, coba lagi.';
+      msg.textContent = e.message || 'Gagal menyimpan, coba lagi.';
     }
   });
 }
@@ -879,24 +577,25 @@ function renderAdminSignalList(signals){
   const sorted = [...signals].sort((a,b)=> (a.time||'').localeCompare(b.time||''));
   wrap.innerHTML = sorted.map(s=>{
     const resClass = s.result==='SL' ? 'sl' : 'tp';
-    return `<div class="admin-signal-item">
-      <span>${s.time||'-'}</span>
-      <span class="dir ${s.direction==='SELL'?'sell':'buy'}">${s.direction}</span>
-      <span>${s.entryPrice||'-'}</span>
-      <span class="res ${resClass}">${s.result}</span>
-      <span class="pnl ${pnlClass(parseFloat(s.pnl)||0)}">${fmtPnl(parseFloat(s.pnl)||0)}</span>
-      <button class="del-btn" data-id="${s.id}">✕</button>
-    </div>`;
+    return '<div class="admin-signal-item">'
+      + '<span>'+(s.time||'-')+'</span>'
+      + '<span class="dir '+(s.direction==='SELL'?'sell':'buy')+'">'+s.direction+'</span>'
+      + '<span>'+(s.entryPrice||'-')+'</span>'
+      + '<span class="res '+resClass+'">'+s.result+'</span>'
+      + '<span class="pnl '+pnlClass(parseFloat(s.pnl)||0)+'">'+fmtPnl(parseFloat(s.pnl)||0)+'</span>'
+      + '<button class="del-btn" data-id="'+s.id+'">✕</button>'
+      + '</div>';
   }).join('');
 
   wrap.querySelectorAll('.del-btn').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       const id = btn.getAttribute('data-id');
-      const current = await loadDay(state.selectedDate) || {signals:[], screenshot:null};
-      current.signals = (current.signals||[]).filter(s=>s.id!==id);
-      current.updatedAt = Date.now();
-      await saveDay(state.selectedDate, current);
-      renderDaily();
+      try{
+        await apiWrite('/api/day/'+state.selectedDate+'/signal/'+id, 'DELETE');
+        renderDaily();
+      }catch(e){
+        alert(e.message || 'Gagal menghapus, coba lagi.');
+      }
     });
   });
 }
@@ -906,20 +605,14 @@ async function renderMonthly(){
   const monthStr = state.selectedMonth;
   document.getElementById('monthInput').value = monthStr;
 
-  const dates = await listDatesInMonth(monthStr);
+  const monthData = await loadMonth(monthStr);
   let total=0, tp1=0, tp2=0, sl=0, totalPnl=0;
   const rows = [];
-  for(const d of dates){
-    const day = await loadDay(d);
-    if(!day) continue;
-    const s = computeStats(day.signals);
-    total += s.total;
-    tp1 += s.tp1;
-    tp2 += s.tp2;
-    sl += s.sl;
-    totalPnl += s.totalPnl;
+  Object.keys(monthData).forEach(d=>{
+    const s = computeStats(monthData[d].signals);
+    total += s.total; tp1 += s.tp1; tp2 += s.tp2; sl += s.sl; totalPnl += s.totalPnl;
     rows.push({date:d, stats:s});
-  }
+  });
 
   const monthWinrate = total ? Math.round(((tp1+tp2)/total)*1000)/10 : 0;
   document.getElementById('monthWinrate').innerHTML = monthWinrate+'<span class="pct">%</span>';
@@ -938,11 +631,11 @@ async function renderMonthly(){
   }
   rows.sort((a,b)=> b.date.localeCompare(a.date));
   ledger.innerHTML = rows.map(r=>{
-    return `<div class="ledger-row" data-date="${r.date}">
-      <div class="ledger-date">${r.date}</div>
-      <div class="ledger-mid"><span>${r.stats.total} sinyal</span><span>TP ${r.stats.tp1+r.stats.tp2}</span><span>SL ${r.stats.sl}</span></div>
-      <div class="ledger-win">${r.stats.winrate}%</div>
-    </div>`;
+    return '<div class="ledger-row" data-date="'+r.date+'">'
+      + '<div class="ledger-date">'+r.date+'</div>'
+      + '<div class="ledger-mid"><span>'+r.stats.total+' sinyal</span><span>TP '+(r.stats.tp1+r.stats.tp2)+'</span><span>SL '+r.stats.sl+'</span></div>'
+      + '<div class="ledger-win">'+r.stats.winrate+'%</div>'
+      + '</div>';
   }).join('');
 
   ledger.querySelectorAll('.ledger-row').forEach(row=>{
@@ -963,8 +656,6 @@ function switchView(view){
 }
 
 // ---------- ADMIN AUTH ----------
-const ADMIN_PASSWORD = 'gold2026';
-
 function showLoginModal(){
   const root = document.getElementById('modalRoot');
   root.innerHTML = `
@@ -982,15 +673,27 @@ function showLoginModal(){
   `;
   document.getElementById('pwCancel').addEventListener('click', ()=>{ root.innerHTML=''; });
   document.getElementById('modalBg').addEventListener('click', (e)=>{ if(e.target.id==='modalBg') root.innerHTML=''; });
-  document.getElementById('pwSubmit').addEventListener('click', ()=>{
+  document.getElementById('pwSubmit').addEventListener('click', async ()=>{
     const val = document.getElementById('pwInput').value;
-    if(val === ADMIN_PASSWORD){
-      state.isAdmin = true;
-      root.innerHTML='';
-      renderAdminUI();
-      if(state.view==='daily') renderDaily();
-    }else{
-      document.getElementById('pwError').textContent = 'Kata sandi salah.';
+    try{
+      const res = await fetch('/api/admin/verify', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({password: val})
+      });
+      const data = await res.json();
+      if(data.ok){
+        state.isAdmin = true;
+        state.adminPassword = val;
+        sessionStorage.setItem('admin_pw', val);
+        root.innerHTML='';
+        renderAdminUI();
+        renderDaily();
+      }else{
+        document.getElementById('pwError').textContent = 'Kata sandi salah.';
+      }
+    }catch(e){
+      document.getElementById('pwError').textContent = 'Gagal menghubungi server.';
     }
   });
   document.getElementById('pwInput').addEventListener('keydown', (e)=>{
@@ -1000,14 +703,14 @@ function showLoginModal(){
 
 function renderAdminUI(){
   const btn = document.getElementById('adminToggleBtn');
-  if(state.isAdmin){
-    btn.outerHTML = '<span class="admin-pill" id="adminToggleBtn">● Admin</span>';
-    document.getElementById('adminToggleBtn').addEventListener('click', ()=>{
-      state.isAdmin = false;
-      renderLogoutUI();
-      renderDaily();
-    });
-  }
+  btn.outerHTML = '<button class="admin-pill" id="adminToggleBtn">● Admin</button>';
+  document.getElementById('adminToggleBtn').addEventListener('click', ()=>{
+    state.isAdmin = false;
+    state.adminPassword = null;
+    sessionStorage.removeItem('admin_pw');
+    renderLogoutUI();
+    renderDaily();
+  });
 }
 function renderLogoutUI(){
   const btn = document.getElementById('adminToggleBtn');
@@ -1023,7 +726,19 @@ async function init(){
   state.selectedDate = latest || todayStr;
   state.selectedMonth = toMonthStr(new Date(state.selectedDate+'T00:00:00'));
 
-  document.getElementById('adminToggleBtn').addEventListener('click', showLoginModal);
+  const savedPw = sessionStorage.getItem('admin_pw');
+  if(savedPw){
+    try{
+      const res = await fetch('/api/admin/verify', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: savedPw})
+      });
+      const data = await res.json();
+      if(data.ok){ state.isAdmin = true; state.adminPassword = savedPw; }
+    }catch(e){}
+  }
+
+  if(state.isAdmin) renderAdminUI();
+  else document.getElementById('adminToggleBtn').addEventListener('click', showLoginModal);
 
   document.querySelectorAll('.tab').forEach(t=>{
     t.addEventListener('click', ()=>switchView(t.dataset.view));
