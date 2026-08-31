@@ -1,787 +1,3824 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Assistant Gold — Jurnal Sinyal</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
 
-  :root{
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>
+AI Assistant Gold — Jurnal Sinyal
+</title>
+
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+
     --ink:#14110F;
     --surface:#1C1815;
     --surface-raised:#231E19;
+
     --paper:#E9E2D2;
     --paper-dim:#B7AF9C;
+
     --brass:#B8944F;
     --brass-dim:#8C723F;
+
     --win:#7A8B6F;
     --loss:#A65D4A;
+
+    --pending:#C59B52;
+    --neutral:#888174;
+
     --hairline:rgba(233,226,210,0.12);
     --hairline-strong:rgba(233,226,210,0.22);
-  }
+}
 
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
+*{
+    box-sizing:border-box;
+}
+
+html,
+body{
+    margin:0;
+    padding:0;
+}
+
+body{
+
     background:var(--ink);
     color:var(--paper);
+
     font-family:'Inter',sans-serif;
+
     min-height:100vh;
+
     -webkit-font-smoothing:antialiased;
-  }
+}
 
-  .wrap{
-    max-width:640px;
+.wrap{
+
+    max-width:760px;
+
     margin:0 auto;
-    padding:0 20px 80px;
-  }
 
-  header{
-    padding:44px 0 28px;
+    padding:
+        0
+        20px
+        80px;
+}
+
+/* ============================================================
+HEADER
+============================================================ */
+
+header{
+
+    padding:
+        44px
+        0
+        28px;
+
     text-align:center;
-    border-bottom:1px solid var(--hairline);
+
+    border-bottom:
+        1px solid
+        var(--hairline);
+
     position:relative;
-  }
-  .mark{
-    width:34px;height:34px;margin:0 auto 18px;
-    border:1px solid var(--brass-dim);
+}
+
+.mark{
+
+    width:34px;
+    height:34px;
+
+    margin:
+        0
+        auto
+        18px;
+
+    border:
+        1px solid
+        var(--brass-dim);
+
     border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
     font-family:'Fraunces',serif;
+
     font-size:16px;
+
     color:var(--brass);
-  }
-  h1{
+}
+
+h1{
+
     font-family:'Fraunces',serif;
+
     font-weight:500;
-    font-size:clamp(26px,6vw,34px);
-    letter-spacing:0.2px;
-    margin:0 0 8px;
+
+    font-size:
+        clamp(
+            26px,
+            6vw,
+            34px
+        );
+
+    margin:
+        0
+        0
+        8px;
+
     color:var(--paper);
-  }
-  h1 em{ font-style:italic; color:var(--brass); }
-  .tagline{ font-size:13.5px; color:var(--paper-dim); margin:0; }
-  .admin-toggle{
-    position:absolute; top:16px; right:0;
-    font-size:12px; color:var(--paper-dim);
-    background:none; border:none; cursor:pointer;
-    letter-spacing:0.3px;
-    text-decoration:underline; text-underline-offset:3px;
-    text-decoration-color:var(--hairline-strong);
-  }
-  .admin-toggle:hover{ color:var(--brass); }
-  .admin-pill{
-    position:absolute; top:14px; right:0;
-    font-size:11px; color:var(--win);
-    border:1px solid rgba(122,139,111,0.4);
-    padding:4px 10px; border-radius:20px;
-    background:none; cursor:pointer;
-  }
+}
 
-  .tabs{
-    display:flex; margin-top:28px;
-    border:1px solid var(--hairline-strong);
-    border-radius:8px; overflow:hidden;
-  }
-  .tab{
-    flex:1; padding:12px 0; text-align:center;
-    background:none; border:none; color:var(--paper-dim);
-    font-family:'Inter',sans-serif; font-size:14px; cursor:pointer;
-    letter-spacing:0.2px;
-  }
-  .tab + .tab{ border-left:1px solid var(--hairline-strong); }
-  .tab.active{ background:var(--surface-raised); color:var(--brass); }
+h1 em{
 
-  .picker-row{
-    display:flex; align-items:center; justify-content:space-between;
-    gap:12px; margin-top:22px;
-  }
-  .picker-row input[type=date], .picker-row input[type=month]{
-    background:var(--surface); border:1px solid var(--hairline-strong);
-    color:var(--paper); font-family:'IBM Plex Mono',monospace;
-    font-size:14px; padding:10px 12px; border-radius:6px; flex:1;
-  }
-  .nav-btn{
-    background:var(--surface); border:1px solid var(--hairline-strong);
-    color:var(--paper-dim); width:38px; height:38px; border-radius:6px;
-    font-size:16px; cursor:pointer; flex-shrink:0;
-  }
-  .nav-btn:hover{ color:var(--brass); border-color:var(--brass-dim); }
-  .latest-badge{ display:inline-block; margin-top:10px; font-size:11.5px; color:var(--win); letter-spacing:0.2px; }
+    font-style:italic;
 
-  .hero-stat{ margin-top:30px; text-align:center; padding:34px 0 10px; }
-  .hero-num{
-    font-family:'Fraunces',serif; font-weight:500;
-    font-size:clamp(56px,18vw,76px); color:var(--brass); line-height:1;
-  }
-  .hero-num .pct{ font-size:0.45em; color:var(--brass-dim); margin-left:2px; }
-  .hero-label{ font-size:13px; color:var(--paper-dim); margin-top:6px; }
-  .hero-sub{ font-size:12.5px; color:var(--paper-dim); margin-top:4px; }
+    color:var(--brass);
+}
 
-  .stat-grid{
-    display:grid; grid-template-columns:repeat(4,1fr);
-    border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+.tagline{
+
+    font-size:13.5px;
+
+    color:var(--paper-dim);
+
+    margin:0;
+}
+
+.admin-toggle{
+
+    position:absolute;
+
+    top:16px;
+    right:0;
+
+    font-size:12px;
+
+    color:var(--paper-dim);
+
+    background:none;
+
+    border:none;
+
+    cursor:pointer;
+
+    text-decoration:underline;
+
+    text-underline-offset:3px;
+}
+
+.admin-toggle:hover{
+
+    color:var(--brass);
+}
+
+.admin-pill{
+
+    position:absolute;
+
+    top:14px;
+    right:0;
+
+    font-size:11px;
+
+    color:var(--win);
+
+    border:
+        1px solid
+        rgba(122,139,111,0.4);
+
+    padding:
+        4px
+        10px;
+
+    border-radius:20px;
+
+    background:none;
+
+    cursor:pointer;
+}
+
+/* ============================================================
+TABS
+============================================================ */
+
+.tabs{
+
+    display:flex;
+
+    margin-top:28px;
+
+    border:
+        1px solid
+        var(--hairline-strong);
+
+    border-radius:8px;
+
+    overflow:hidden;
+}
+
+.tab{
+
+    flex:1;
+
+    padding:12px 0;
+
+    text-align:center;
+
+    background:none;
+
+    border:none;
+
+    color:var(--paper-dim);
+
+    font-family:'Inter',sans-serif;
+
+    font-size:14px;
+
+    cursor:pointer;
+}
+
+.tab + .tab{
+
+    border-left:
+        1px solid
+        var(--hairline-strong);
+}
+
+.tab.active{
+
+    background:var(--surface-raised);
+
+    color:var(--brass);
+}
+
+/* ============================================================
+PICKER
+============================================================ */
+
+.picker-row{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:12px;
+
+    margin-top:22px;
+}
+
+.picker-row input[type=date],
+.picker-row input[type=month]{
+
+    background:var(--surface);
+
+    border:
+        1px solid
+        var(--hairline-strong);
+
+    color:var(--paper);
+
+    font-family:'IBM Plex Mono',monospace;
+
+    font-size:14px;
+
+    padding:
+        10px
+        12px;
+
+    border-radius:6px;
+
+    flex:1;
+}
+
+.nav-btn{
+
+    background:var(--surface);
+
+    border:
+        1px solid
+        var(--hairline-strong);
+
+    color:var(--paper-dim);
+
+    width:38px;
+    height:38px;
+
+    border-radius:6px;
+
+    font-size:16px;
+
+    cursor:pointer;
+
+    flex-shrink:0;
+}
+
+.nav-btn:hover{
+
+    color:var(--brass);
+
+    border-color:var(--brass-dim);
+}
+
+.latest-badge{
+
+    display:inline-block;
+
+    margin-top:10px;
+
+    font-size:11.5px;
+
+    color:var(--win);
+}
+
+/* ============================================================
+HERO
+============================================================ */
+
+.hero-stat{
+
+    margin-top:30px;
+
+    text-align:center;
+
+    padding:
+        34px
+        0
+        10px;
+}
+
+.hero-num{
+
+    font-family:'Fraunces',serif;
+
+    font-weight:500;
+
+    font-size:
+        clamp(
+            56px,
+            18vw,
+            76px
+        );
+
+    color:var(--brass);
+
+    line-height:1;
+}
+
+.hero-num .pct{
+
+    font-size:0.45em;
+
+    color:var(--brass-dim);
+
+    margin-left:2px;
+}
+
+.hero-label{
+
+    font-size:13px;
+
+    color:var(--paper-dim);
+
+    margin-top:6px;
+}
+
+.hero-sub{
+
+    font-size:12.5px;
+
+    color:var(--paper-dim);
+
+    margin-top:4px;
+}
+
+/* ============================================================
+STAT
+============================================================ */
+
+.stat-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    border-top:
+        1px solid
+        var(--hairline);
+
+    border-bottom:
+        1px solid
+        var(--hairline);
+
     margin-top:20px;
-  }
-  .stat-cell{ text-align:center; padding:18px 4px; border-left:1px solid var(--hairline); }
-  .stat-cell:first-child{ border-left:none; }
-  .stat-cell .num{ font-family:'IBM Plex Mono',monospace; font-size:19px; font-weight:600; color:var(--paper); }
-  .stat-cell.tp .num{ color:var(--win); }
-  .stat-cell.sl .num{ color:var(--loss); }
-  .stat-cell .lbl{ font-size:10.5px; color:var(--paper-dim); margin-top:4px; letter-spacing:0.3px; }
+}
 
-  .pnl-line{ text-align:center; margin-top:14px; font-size:13px; color:var(--paper-dim); }
-  .pnl-line .val{ font-family:'IBM Plex Mono',monospace; font-weight:600; }
-  .pnl-line .val.pos{ color:var(--win); }
-  .pnl-line .val.neg{ color:var(--loss); }
+.stat-cell{
 
-  .signals-section{ margin-top:32px; }
-  .signals-title{ font-size:12px; color:var(--paper-dim); letter-spacing:0.3px; margin-bottom:10px; }
-  .signal-row{
-    display:grid; grid-template-columns:52px 44px 1fr 52px 64px; gap:8px;
-    align-items:center; padding:10px 0; border-bottom:1px solid var(--hairline);
-    font-family:'IBM Plex Mono',monospace; font-size:12px;
-  }
-  .signal-row.head{ color:var(--paper-dim); font-size:10.5px; letter-spacing:0.3px; border-bottom:1px solid var(--hairline-strong); }
-  .signal-row .dir{ font-size:11px; }
-  .signal-row .dir.buy{ color:var(--win); }
-  .signal-row .dir.sell{ color:var(--loss); }
-  .signal-row .res{ text-align:center; font-size:11px; }
-  .signal-row .res.tp{ color:var(--win); }
-  .signal-row .res.sl{ color:var(--loss); }
-  .signal-row .pnl{ text-align:right; }
-  .signal-row .pnl.pos{ color:var(--win); }
-  .signal-row .pnl.neg{ color:var(--loss); }
-  .signals-empty{ padding:24px 0; text-align:center; color:var(--paper-dim); font-size:13px; }
+    text-align:center;
 
-  .admin-signal-form{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
-  .admin-signal-form select{
-    width:100%; background:var(--surface); border:1px solid var(--hairline-strong);
-    color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:14px;
-    padding:10px 12px; border-radius:6px;
-  }
-  .admin-signal-list{ margin-top:16px; }
-  .admin-signal-item{
-    display:grid; grid-template-columns:52px 44px 1fr 52px 64px 26px; gap:8px;
-    align-items:center; padding:9px 0; border-bottom:1px solid var(--hairline);
-    font-family:'IBM Plex Mono',monospace; font-size:12px;
-  }
-  .del-btn{ background:none; border:none; color:var(--loss); cursor:pointer; font-size:15px; text-align:right; }
-  .admin-divider{ margin:26px 0 20px; border:none; border-top:1px solid var(--hairline-strong); }
+    padding:
+        18px
+        4px;
 
-  .shot-section{ margin-top:32px; }
-  .shot-title{
-    font-size:12px; color:var(--paper-dim); letter-spacing:0.3px; margin-bottom:10px;
-    display:flex; justify-content:space-between; align-items:center;
-  }
-  .shot-frame{ border:1px solid var(--hairline-strong); border-radius:8px; overflow:hidden; background:var(--surface); }
-  .shot-frame img{ width:100%; display:block; }
-  .shot-empty{
-    padding:40px 16px; text-align:center; color:var(--paper-dim); font-size:13px;
-    border:1px dashed var(--hairline-strong); border-radius:8px;
-  }
+    border-left:
+        1px solid
+        var(--hairline);
+}
 
-  .ledger{ margin-top:24px; }
-  .ledger-row{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:14px 0; border-bottom:1px solid var(--hairline); cursor:pointer;
-  }
-  .ledger-row:hover .ledger-date{ color:var(--brass); }
-  .ledger-date{ font-family:'IBM Plex Mono',monospace; font-size:13.5px; color:var(--paper); }
-  .ledger-mid{ display:flex; gap:14px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--paper-dim); }
-  .ledger-win{ font-family:'IBM Plex Mono',monospace; font-size:13.5px; color:var(--win); min-width:48px; text-align:right; }
-  .ledger-empty{ padding:30px 0; text-align:center; color:var(--paper-dim); font-size:13px; }
+.stat-cell:first-child{
 
-  .admin-panel{
-    margin-top:32px; border:1px solid rgba(184,148,79,0.3); border-radius:10px;
-    padding:20px; background:rgba(184,148,79,0.04);
-  }
-  .admin-panel h3{ font-family:'Fraunces',serif; font-weight:500; font-size:16px; color:var(--brass); margin:0 0 16px; }
-  .field{ margin-bottom:14px; }
-  .field label{ display:block; font-size:11.5px; color:var(--paper-dim); margin-bottom:6px; letter-spacing:0.2px; }
-  .field input[type=number], .field input[type=text], .field input[type=password]{
-    width:100%; background:var(--surface); border:1px solid var(--hairline-strong);
-    color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:14px;
-    padding:10px 12px; border-radius:6px;
-  }
-  .file-btn{
-    display:inline-block; padding:10px 16px; background:var(--surface);
-    border:1px solid var(--hairline-strong); border-radius:6px; font-size:13px;
-    color:var(--paper); cursor:pointer;
-  }
-  .file-btn:hover{ border-color:var(--brass-dim); }
-  .btn-primary{
-    width:100%; padding:13px 0; background:var(--brass); border:none; border-radius:6px;
-    color:var(--ink); font-family:'Inter',sans-serif; font-weight:600; font-size:14px; cursor:pointer; margin-top:6px;
-  }
-  .btn-primary:hover{ background:#c9a35d; }
-  .btn-ghost{
-    width:100%; padding:11px 0; background:none; border:1px solid var(--hairline-strong);
-    border-radius:6px; color:var(--paper-dim); font-size:13px; cursor:pointer; margin-top:8px;
-  }
-  .save-msg{ font-size:12px; color:var(--win); margin-top:10px; min-height:14px; }
+    border-left:none;
+}
 
-  .modal-bg{
-    position:fixed; inset:0; background:rgba(20,17,15,0.7);
-    display:flex; align-items:center; justify-content:center; padding:20px; z-index:50;
-  }
-  .modal{ background:var(--surface-raised); border:1px solid var(--hairline-strong); border-radius:10px; padding:26px; width:100%; max-width:340px; }
-  .modal h3{ font-family:'Fraunces',serif; font-weight:500; font-size:17px; margin:0 0 16px; color:var(--paper); }
-  .modal .error{ color:var(--loss); font-size:12px; margin-top:8px; min-height:14px; }
+.stat-cell .num{
 
-  footer{ margin-top:50px; text-align:center; font-size:11.5px; color:var(--paper-dim); line-height:1.6; }
+    font-family:'IBM Plex Mono',monospace;
 
-  .cta-wrap{ margin-top:40px; text-align:center; }
-  .cta-btn{
-    display:inline-block; background:var(--brass); color:var(--ink);
-    font-family:'Inter',sans-serif; font-weight:600; font-size:15px; letter-spacing:0.2px;
-    padding:16px 32px; border-radius:8px; text-decoration:none; width:100%; max-width:360px;
-  }
-  .cta-btn:hover{ background:#c9a35d; }
-  .cta-sub{ margin-top:10px; font-size:12px; color:var(--paper-dim); }
+    font-size:19px;
 
-  @media (max-width:420px){
-    .stat-grid{ grid-template-columns:repeat(2,1fr); }
-    .stat-cell:nth-child(3){ border-left:none; }
-    .signal-row{ grid-template-columns:40px 38px 1fr 42px 52px; font-size:11px; }
-    .admin-signal-item{ grid-template-columns:40px 38px 1fr 42px 52px 22px; font-size:11px; }
-    .admin-signal-form{ grid-template-columns:1fr; }
-  }
+    font-weight:600;
+
+    color:var(--paper);
+}
+
+.stat-cell.tp .num{
+
+    color:var(--win);
+}
+
+.stat-cell.sl .num{
+
+    color:var(--loss);
+}
+
+.stat-cell.pending .num{
+
+    color:var(--pending);
+}
+
+.stat-cell .lbl{
+
+    font-size:10.5px;
+
+    color:var(--paper-dim);
+
+    margin-top:4px;
+}
+
+.pnl-line{
+
+    text-align:center;
+
+    margin-top:14px;
+
+    font-size:13px;
+
+    color:var(--paper-dim);
+}
+
+.pnl-line .val{
+
+    font-family:'IBM Plex Mono',monospace;
+
+    font-weight:600;
+}
+
+.val.pos{
+
+    color:var(--win);
+}
+
+.val.neg{
+
+    color:var(--loss);
+}
+
+/* ============================================================
+SIGNALS
+============================================================ */
+
+.signals-section{
+
+    margin-top:32px;
+}
+
+.signals-title{
+
+    font-size:12px;
+
+    color:var(--paper-dim);
+
+    margin-bottom:10px;
+}
+
+.signal-row{
+
+    display:grid;
+
+    grid-template-columns:
+        55px
+        55px
+        75px
+        75px
+        75px
+        75px
+        75px;
+
+    gap:7px;
+
+    align-items:center;
+
+    padding:
+        11px
+        0;
+
+    border-bottom:
+        1px solid
+        var(--hairline);
+
+    font-family:'IBM Plex Mono',monospace;
+
+    font-size:11px;
+}
+
+.signal-row.head{
+
+    color:var(--paper-dim);
+
+    font-size:9.5px;
+
+    border-bottom:
+        1px solid
+        var(--hairline-strong);
+}
+
+.dir.buy{
+
+    color:var(--win);
+}
+
+.dir.sell{
+
+    color:var(--loss);
+}
+
+.res.tp{
+
+    color:var(--win);
+}
+
+.res.sl{
+
+    color:var(--loss);
+}
+
+.res.pending{
+
+    color:var(--pending);
+}
+
+.res.none{
+
+    color:var(--neutral);
+}
+
+.pnl{
+
+    text-align:right;
+}
+
+.pnl.pos{
+
+    color:var(--win);
+}
+
+.pnl.neg{
+
+    color:var(--loss);
+}
+
+.signals-empty{
+
+    padding:
+        24px
+        0;
+
+    text-align:center;
+
+    color:var(--paper-dim);
+
+    font-size:13px;
+}
+
+/* ============================================================
+ADMIN
+============================================================ */
+
+.admin-panel{
+
+    margin-top:32px;
+
+    border:
+        1px solid
+        rgba(184,148,79,0.3);
+
+    border-radius:10px;
+
+    padding:20px;
+
+    background:
+        rgba(
+            184,
+            148,
+            79,
+            0.04
+        );
+}
+
+.admin-panel h3{
+
+    font-family:'Fraunces',serif;
+
+    font-weight:500;
+
+    font-size:16px;
+
+    color:var(--brass);
+
+    margin:
+        0
+        0
+        16px;
+}
+
+.admin-signal-form{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(2,1fr);
+
+    gap:10px;
+
+    margin-bottom:14px;
+}
+
+.field{
+
+    margin-bottom:14px;
+}
+
+.field label{
+
+    display:block;
+
+    font-size:11.5px;
+
+    color:var(--paper-dim);
+
+    margin-bottom:6px;
+}
+
+.field input,
+.field select{
+
+    width:100%;
+
+    background:var(--surface);
+
+    border:
+        1px solid
+        var(--hairline-strong);
+
+    color:var(--paper);
+
+    font-family:'IBM Plex Mono',monospace;
+
+    font-size:14px;
+
+    padding:
+        10px
+        12px;
+
+    border-radius:6px;
+
+    outline:none;
+}
+
+.field input:focus,
+.field select:focus{
+
+    border-color:var(--brass-dim);
+}
+
+.full{
+
+    grid-column:
+        span 2;
+}
+
+.btn-primary{
+
+    width:100%;
+
+    padding:13px 0;
+
+    background:var(--brass);
+
+    border:none;
+
+    border-radius:6px;
+
+    color:var(--ink);
+
+    font-weight:600;
+
+    font-size:14px;
+
+    cursor:pointer;
+
+    margin-top:6px;
+}
+
+.btn-primary:hover{
+
+    background:#c9a35d;
+}
+
+.btn-ghost{
+
+    width:100%;
+
+    padding:11px 0;
+
+    background:none;
+
+    border:
+        1px solid
+        var(--hairline-strong);
+
+    border-radius:6px;
+
+    color:var(--paper-dim);
+
+    font-size:13px;
+
+    cursor:pointer;
+
+    margin-top:8px;
+}
+
+.save-msg{
+
+    font-size:12px;
+
+    color:var(--win);
+
+    margin-top:10px;
+
+    min-height:14px;
+}
+
+.admin-signal-list{
+
+    margin-top:16px;
+}
+
+.admin-signal-item{
+
+    display:grid;
+
+    grid-template-columns:
+        45px
+        50px
+        65px
+        65px
+        65px
+        65px
+        65px
+        25px;
+
+    gap:5px;
+
+    align-items:center;
+
+    padding:
+        9px
+        0;
+
+    border-bottom:
+        1px solid
+        var(--hairline);
+
+    font-family:'IBM Plex Mono',monospace;
+
+    font-size:10px;
+}
+
+.del-btn{
+
+    background:none;
+
+    border:none;
+
+    color:var(--loss);
+
+    cursor:pointer;
+
+    font-size:15px;
+}
+
+.admin-divider{
+
+    margin:
+        26px
+        0
+        20px;
+
+    border:none;
+
+    border-top:
+        1px solid
+        var(--hairline-strong);
+}
+
+/* ============================================================
+SCREENSHOT
+============================================================ */
+
+.shot-section{
+
+    margin-top:32px;
+}
+
+.shot-title{
+
+    font-size:12px;
+
+    color:var(--paper-dim);
+
+    margin-bottom:10px;
+}
+
+.shot-frame{
+
+    border:
+        1px solid
+        var(--hairline-strong);
+
+    border-radius:8px;
+
+    overflow:hidden;
+
+    background:var(--surface);
+}
+
+.shot-frame img{
+
+    width:100%;
+
+    display:block;
+}
+
+.shot-empty{
+
+    padding:
+        40px
+        16px;
+
+    text-align:center;
+
+    color:var(--paper-dim);
+
+    font-size:13px;
+
+    border:
+        1px dashed
+        var(--hairline-strong);
+
+    border-radius:8px;
+}
+
+/* ============================================================
+LEDGER
+============================================================ */
+
+.ledger{
+
+    margin-top:24px;
+}
+
+.ledger-row{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:
+        14px
+        0;
+
+    border-bottom:
+        1px solid
+        var(--hairline);
+
+    cursor:pointer;
+}
+
+.ledger-date{
+
+    font-family:'IBM Plex Mono',monospace;
+
+    font-size:13.5px;
+
+    color:var(--paper);
+}
+
+.ledger-mid{
+
+    display:flex;
+
+    gap:14px;
+
+    font-family:'IBM Plex Mono',monospace;
+
+    font-size:12px;
+
+    color:var(--paper-dim);
+}
+
+.ledger-win{
+
+    font-family:'IBM Plex Mono',monospace;
+
+    font-size:13.5px;
+
+    color:var(--win);
+
+    min-width:48px;
+
+    text-align:right;
+}
+
+.ledger-empty{
+
+    padding:30px 0;
+
+    text-align:center;
+
+    color:var(--paper-dim);
+
+    font-size:13px;
+}
+
+/* ============================================================
+MODAL
+============================================================ */
+
+.modal-bg{
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+        rgba(
+            20,
+            17,
+            15,
+            0.7
+        );
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:20px;
+
+    z-index:50;
+}
+
+.modal{
+
+    background:var(--surface-raised);
+
+    border:
+        1px solid
+        var(--hairline-strong);
+
+    border-radius:10px;
+
+    padding:26px;
+
+    width:100%;
+
+    max-width:340px;
+}
+
+.modal h3{
+
+    font-family:'Fraunces',serif;
+
+    font-weight:500;
+
+    font-size:17px;
+
+    margin:
+        0
+        0
+        16px;
+}
+
+.modal .error{
+
+    color:var(--loss);
+
+    font-size:12px;
+
+    margin-top:8px;
+
+    min-height:14px;
+}
+
+/* ============================================================
+CTA
+============================================================ */
+
+.cta-wrap{
+
+    margin-top:40px;
+
+    text-align:center;
+}
+
+.cta-btn{
+
+    display:inline-block;
+
+    background:var(--brass);
+
+    color:var(--ink);
+
+    font-weight:600;
+
+    font-size:15px;
+
+    padding:
+        16px
+        32px;
+
+    border-radius:8px;
+
+    text-decoration:none;
+
+    width:100%;
+
+    max-width:360px;
+}
+
+.cta-btn:hover{
+
+    background:#c9a35d;
+}
+
+.cta-sub{
+
+    margin-top:10px;
+
+    font-size:12px;
+
+    color:var(--paper-dim);
+}
+
+/* ============================================================
+FOOTER
+============================================================ */
+
+footer{
+
+    margin-top:50px;
+
+    text-align:center;
+
+    font-size:11.5px;
+
+    color:var(--paper-dim);
+
+    line-height:1.6;
+}
+
+/* ============================================================
+MOBILE
+============================================================ */
+
+@media(max-width:650px){
+
+    .signal-row{
+
+        grid-template-columns:
+            42px
+            48px
+            60px
+            60px
+            60px
+            60px
+            58px;
+
+        font-size:9px;
+
+        gap:4px;
+    }
+
+    .signal-row.head{
+
+        font-size:8px;
+    }
+
+    .admin-signal-item{
+
+        grid-template-columns:
+            38px
+            42px
+            55px
+            55px
+            55px
+            55px
+            55px
+            20px;
+
+        font-size:8.5px;
+    }
+}
+
+@media(max-width:500px){
+
+    .stat-grid{
+
+        grid-template-columns:
+            repeat(2,1fr);
+    }
+
+    .stat-cell:nth-child(3){
+
+        border-left:none;
+    }
+
+    .admin-signal-form{
+
+        grid-template-columns:1fr;
+    }
+
+    .full{
+
+        grid-column:
+            span 1;
+    }
+
+    .signal-row{
+
+        grid-template-columns:
+            36px
+            40px
+            55px
+            55px
+            55px
+            55px
+            50px;
+
+        font-size:8px;
+    }
+
+    .admin-signal-item{
+
+        grid-template-columns:
+            34px
+            38px
+            48px
+            48px
+            48px
+            48px
+            48px
+            18px;
+
+        font-size:7.5px;
+    }
+
+    .ledger-mid{
+
+        gap:6px;
+
+        font-size:10px;
+    }
+}
+
 </style>
+
 </head>
+
 <body>
+
 <div class="wrap">
 
-  <header>
-    <button class="admin-toggle" id="adminToggleBtn">Admin</button>
-    <div class="mark">Au</div>
-    <h1>AI Assistant <em>Gold</em></h1>
-    <p class="tagline">Jurnal performa sinyal XAUUSD</p>
-  </header>
+<header>
 
-  <div class="tabs">
-    <button class="tab active" data-view="daily">Harian</button>
-    <button class="tab" data-view="monthly">Bulanan</button>
-  </div>
+<button
+    class="admin-toggle"
+    id="adminToggleBtn"
+>
+Admin
+</button>
 
-  <!-- DAILY VIEW -->
-  <div id="dailyView">
-    <div class="picker-row">
-      <button class="nav-btn" id="prevDay">‹</button>
-      <input type="date" id="dateInput">
-      <button class="nav-btn" id="nextDay">›</button>
-    </div>
-    <div id="latestBadgeWrap"></div>
-
-    <div class="hero-stat">
-      <div class="hero-num" id="heroWinrate">—<span class="pct">%</span></div>
-      <div class="hero-label">Winrate periode sinyal</div>
-      <div class="hero-sub" id="heroPeriod">07.00 — 02.00 WIB</div>
-    </div>
-
-    <div class="stat-grid">
-      <div class="stat-cell"><div class="num" id="statTotal">0</div><div class="lbl">Total Signal</div></div>
-      <div class="stat-cell tp"><div class="num" id="statTp1">0</div><div class="lbl">TP 1</div></div>
-      <div class="stat-cell tp"><div class="num" id="statTp2">0</div><div class="lbl">TP 2</div></div>
-      <div class="stat-cell sl"><div class="num" id="statSl">0</div><div class="lbl">SL</div></div>
-    </div>
-    <div class="pnl-line">Total PnL periode: <span class="val" id="statPnl">$0</span></div>
-
-    <div class="signals-section">
-      <div class="signals-title">Rincian sinyal</div>
-      <div id="signalsListWrap"></div>
-    </div>
-
-    <div class="shot-section">
-      <div class="shot-title"><span>Bukti PnL (MT5)</span></div>
-      <div id="shotWrap"><div class="shot-empty">Belum ada screenshot untuk tanggal ini</div></div>
-    </div>
-
-    <div id="adminDailyPanel"></div>
-  </div>
-
-  <!-- MONTHLY VIEW -->
-  <div id="monthlyView" style="display:none;">
-    <div class="picker-row">
-      <button class="nav-btn" id="prevMonth">‹</button>
-      <input type="month" id="monthInput">
-      <button class="nav-btn" id="nextMonth">›</button>
-    </div>
-
-    <div class="hero-stat">
-      <div class="hero-num" id="monthWinrate">—<span class="pct">%</span></div>
-      <div class="hero-label">Winrate rata-rata bulan ini</div>
-    </div>
-
-    <div class="stat-grid">
-      <div class="stat-cell"><div class="num" id="monthTotal">0</div><div class="lbl">Total Signal</div></div>
-      <div class="stat-cell tp"><div class="num" id="monthTp1">0</div><div class="lbl">TP 1</div></div>
-      <div class="stat-cell tp"><div class="num" id="monthTp2">0</div><div class="lbl">TP 2</div></div>
-      <div class="stat-cell sl"><div class="num" id="monthSl">0</div><div class="lbl">SL</div></div>
-    </div>
-    <div class="pnl-line">Total PnL bulan ini: <span class="val" id="monthPnl">$0</span></div>
-
-    <div class="ledger" id="ledgerList"></div>
-  </div>
-
-  <div class="cta-wrap">
-    <a class="cta-btn" href="https://signalxau-ai.com/" target="_blank" rel="noopener">Aktifkan AI Assistant Gold Sekarang</a>
-    <div class="cta-sub">Akses penuh sinyal, analisa, dan dashboard performa</div>
-  </div>
-
-  <footer>
-    Setiap periode sinyal berjalan pukul 07.00 hingga 02.00 WIB keesokan harinya,<br>
-    dengan rata-rata 20 sinyal per periode.
-  </footer>
+<div class="mark">
+Au
 </div>
+
+<h1>
+AI Assistant <em>Gold</em>
+</h1>
+
+<p class="tagline">
+Jurnal performa sinyal XAUUSD
+</p>
+
+</header>
+
+
+<!-- ============================================================
+TABS
+============================================================ -->
+
+<div class="tabs">
+
+<button
+    class="tab active"
+    data-view="daily"
+>
+Harian
+</button>
+
+<button
+    class="tab"
+    data-view="monthly"
+>
+Bulanan
+</button>
+
+</div>
+
+
+<!-- ============================================================
+DAILY
+============================================================ -->
+
+<div id="dailyView">
+
+<div class="picker-row">
+
+<button
+    class="nav-btn"
+    id="prevDay"
+>
+‹
+</button>
+
+<input
+    type="date"
+    id="dateInput"
+>
+
+<button
+    class="nav-btn"
+    id="nextDay"
+>
+›
+</button>
+
+</div>
+
+<div id="latestBadgeWrap"></div>
+
+
+<div class="hero-stat">
+
+<div
+    class="hero-num"
+    id="heroWinrate"
+>
+—<span class="pct">%</span>
+</div>
+
+<div class="hero-label">
+Winrate periode sinyal
+</div>
+
+<div
+    class="hero-sub"
+    id="heroPeriod"
+>
+07.00 — 02.00 WIB
+</div>
+
+</div>
+
+
+<div class="stat-grid">
+
+<div class="stat-cell">
+
+<div
+    class="num"
+    id="statTotal"
+>
+0
+</div>
+
+<div class="lbl">
+Total Signal
+</div>
+
+</div>
+
+
+<div class="stat-cell tp">
+
+<div
+    class="num"
+    id="statTp1"
+>
+0
+</div>
+
+<div class="lbl">
+TP 1
+</div>
+
+</div>
+
+
+<div class="stat-cell tp">
+
+<div
+    class="num"
+    id="statTp2"
+>
+0
+</div>
+
+<div class="lbl">
+TP 2
+</div>
+
+</div>
+
+
+<div class="stat-cell sl">
+
+<div
+    class="num"
+    id="statSl"
+>
+0
+</div>
+
+<div class="lbl">
+SL
+</div>
+
+</div>
+
+</div>
+
+
+<div class="pnl-line">
+
+Total PnL periode:
+
+<span
+    class="val"
+    id="statPnl"
+>
+$0
+</span>
+
+</div>
+
+
+<!-- SIGNAL LIST -->
+
+<div class="signals-section">
+
+<div class="signals-title">
+Rincian sinyal
+</div>
+
+<div id="signalsListWrap"></div>
+
+</div>
+
+
+<!-- SCREENSHOT -->
+
+<div class="shot-section">
+
+<div class="shot-title">
+Bukti PnL (MT5)
+</div>
+
+<div id="shotWrap">
+
+<div class="shot-empty">
+Belum ada screenshot untuk tanggal ini
+</div>
+
+</div>
+
+</div>
+
+
+<div id="adminDailyPanel"></div>
+
+</div>
+
+
+<!-- ============================================================
+MONTHLY
+============================================================ -->
+
+<div
+    id="monthlyView"
+    style="display:none;"
+>
+
+<div class="picker-row">
+
+<button
+    class="nav-btn"
+    id="prevMonth"
+>
+‹
+</button>
+
+<input
+    type="month"
+    id="monthInput"
+>
+
+<button
+    class="nav-btn"
+    id="nextMonth"
+>
+›
+</button>
+
+</div>
+
+
+<div class="hero-stat">
+
+<div
+    class="hero-num"
+    id="monthWinrate"
+>
+—<span class="pct">%</span>
+</div>
+
+<div class="hero-label">
+Winrate bulan ini
+</div>
+
+</div>
+
+
+<div class="stat-grid">
+
+<div class="stat-cell">
+
+<div
+    class="num"
+    id="monthTotal"
+>
+0
+</div>
+
+<div class="lbl">
+Total Signal
+</div>
+
+</div>
+
+<div class="stat-cell tp">
+
+<div
+    class="num"
+    id="monthTp1"
+>
+0
+</div>
+
+<div class="lbl">
+TP 1
+</div>
+
+</div>
+
+<div class="stat-cell tp">
+
+<div
+    class="num"
+    id="monthTp2"
+>
+0
+</div>
+
+<div class="lbl">
+TP 2
+</div>
+
+</div>
+
+<div class="stat-cell sl">
+
+<div
+    class="num"
+    id="monthSl"
+>
+0
+</div>
+
+<div class="lbl">
+SL
+</div>
+
+</div>
+
+</div>
+
+
+<div class="pnl-line">
+
+Total PnL bulan ini:
+
+<span
+    class="val"
+    id="monthPnl"
+>
+$0
+</span>
+
+</div>
+
+
+<div
+    class="ledger"
+    id="ledgerList"
+></div>
+
+</div>
+
+
+<!-- CTA -->
+
+<div class="cta-wrap">
+
+<a
+    class="cta-btn"
+    href="https://signalxau-ai.com/"
+    target="_blank"
+    rel="noopener"
+>
+Aktifkan AI Assistant Gold Sekarang
+</a>
+
+<div class="cta-sub">
+Akses penuh sinyal, analisa, dan dashboard performa
+</div>
+
+</div>
+
+
+<footer>
+
+Setiap periode sinyal berjalan pukul
+07.00 hingga 02.00 WIB keesokan harinya,
+<br>
+
+dengan rata-rata 20 sinyal per periode.
+
+</footer>
+
+</div>
+
 
 <div id="modalRoot"></div>
 
+
 <script>
+
+// ============================================================
+// STATE
+// ============================================================
+
 const state = {
-  view: 'daily',
-  selectedDate: null,
-  selectedMonth: null,
-  isAdmin: false,
-  adminPassword: null
+
+    view:
+        'daily',
+
+    selectedDate:
+        null,
+
+    selectedMonth:
+        null,
+
+    isAdmin:
+        false,
+
+    adminPassword:
+        null
 };
 
-function pad(n){ return n.toString().padStart(2,'0'); }
-function toDateStr(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
-function toMonthStr(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1); }
+
+// ============================================================
+// DATE HELPERS
+// ============================================================
+
+function pad(n){
+
+    return String(n)
+        .padStart(2,'0');
+}
+
+function toDateStr(d){
+
+    return (
+        d.getFullYear()
+        + '-'
+        + pad(d.getMonth()+1)
+        + '-'
+        + pad(d.getDate())
+    );
+}
+
+function toMonthStr(d){
+
+    return (
+        d.getFullYear()
+        + '-'
+        + pad(d.getMonth()+1)
+    );
+}
+
 function fmtDateLabel(dateStr){
-  const [y,m,d] = dateStr.split('-').map(Number);
-  const dt = new Date(y, m-1, d);
-  const days=['Minggu','Senin','Selasa','Rabu','Kamis',"Jum'at",'Sabtu'];
-  const months=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-  return days[dt.getDay()]+', '+d+' '+months[m-1]+' '+y;
+
+    const [
+        y,
+        m,
+        d
+    ] =
+        dateStr
+        .split('-')
+        .map(Number);
+
+    const dt =
+        new Date(
+            y,
+            m-1,
+            d
+        );
+
+    const days = [
+        'Minggu',
+        'Senin',
+        'Selasa',
+        'Rabu',
+        'Kamis',
+        "Jum'at",
+        'Sabtu'
+    ];
+
+    const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des'
+    ];
+
+    return (
+        days[dt.getDay()]
+        + ', '
+        + d
+        + ' '
+        + months[m-1]
+        + ' '
+        + y
+    );
 }
 
-// ---------- API HELPERS ----------
+
+// ============================================================
+// API
+// ============================================================
+
 async function apiGet(url){
-  const res = await fetch(url);
-  if(!res.ok) throw new Error('Request gagal');
-  return res.json();
+
+    const res =
+        await fetch(url);
+
+    if(!res.ok){
+
+        throw new Error(
+            'Request gagal'
+        );
+    }
+
+    return res.json();
 }
-async function apiWrite(url, method, body){
-  const res = await fetch(url, {
+
+async function apiWrite(
+    url,
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      'x-admin-password': state.adminPassword || ''
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined
-  });
-  if(!res.ok){
-    const err = await res.json().catch(()=>({error:'Gagal menyimpan'}));
-    throw new Error(err.error || 'Gagal menyimpan');
-  }
-  return res.json();
+    body
+){
+
+    const res =
+        await fetch(
+            url,
+            {
+                method,
+
+                headers:{
+                    'Content-Type':
+                        'application/json',
+
+                    'x-admin-password':
+                        state.adminPassword || ''
+                },
+
+                body:
+                    body !== undefined
+                        ? JSON.stringify(body)
+                        : undefined
+            }
+        );
+
+    if(!res.ok){
+
+        const err =
+            await res
+            .json()
+            .catch(
+                () => ({
+                    error:
+                        'Gagal menyimpan'
+                })
+            );
+
+        throw new Error(
+            err.error ||
+            'Gagal menyimpan'
+        );
+    }
+
+    return res.json();
 }
 
-async function loadDay(dateStr){
-  try{ return await apiGet('/api/day/'+dateStr); }
-  catch(e){ return {signals:[], screenshot:null}; }
+
+// ============================================================
+// LOAD
+// ============================================================
+
+async function loadDay(
+    dateStr
+){
+
+    try{
+
+        return await apiGet(
+            '/api/day/' + dateStr
+        );
+
+    }catch(e){
+
+        return {
+            signals:[],
+            screenshot:null
+        };
+    }
 }
+
 async function findLatestDate(){
-  try{ const d = await apiGet('/api/latest'); return d.date; }
-  catch(e){ return null; }
-}
-async function loadMonth(monthStr){
-  try{ return await apiGet('/api/month/'+monthStr); }
-  catch(e){ return {}; }
+
+    try{
+
+        const d =
+            await apiGet(
+                '/api/latest'
+            );
+
+        return d.date;
+
+    }catch(e){
+
+        return null;
+    }
 }
 
-function computeStats(signals){
-  signals = signals || [];
-  const total = signals.length;
-  const tp1 = signals.filter(s=>s.result==='TP1').length;
-  const tp2 = signals.filter(s=>s.result==='TP2').length;
-  const sl = signals.filter(s=>s.result==='SL').length;
-  const totalPnl = signals.reduce((sum,s)=> sum + (parseFloat(s.pnl)||0), 0);
-  const winrate = total ? Math.round(((tp1+tp2)/total)*1000)/10 : 0;
-  return {total, tp1, tp2, sl, totalPnl, winrate};
+async function loadMonth(
+    monthStr
+){
+
+    try{
+
+        return await apiGet(
+            '/api/month/' + monthStr
+        );
+
+    }catch(e){
+
+        return {};
+    }
 }
+
+
+// ============================================================
+// STATS
+// ============================================================
+
+function computeStats(
+    signals
+){
+
+    signals =
+        signals || [];
+
+    const total =
+        signals.length;
+
+    const tp1 =
+        signals.filter(
+            s =>
+                s.result === 'TP1'
+        ).length;
+
+    const tp2 =
+        signals.filter(
+            s =>
+                s.result === 'TP2'
+        ).length;
+
+    const sl =
+        signals.filter(
+            s =>
+                s.result === 'SL'
+        ).length;
+
+    const totalPnl =
+        signals.reduce(
+            (
+                sum,
+                s
+            ) =>
+                sum +
+                (
+                    parseFloat(
+                        s.pnl
+                    ) || 0
+                ),
+            0
+        );
+
+    const decided =
+        tp1 +
+        tp2 +
+        sl;
+
+    const winrate =
+        decided
+            ? Math.round(
+                (
+                    (
+                        tp1 +
+                        tp2
+                    ) /
+                    decided
+                ) *
+                1000
+            ) / 10
+            : 0;
+
+    return {
+        total,
+        tp1,
+        tp2,
+        sl,
+        totalPnl,
+        winrate
+    };
+}
+
+
+// ============================================================
+// PNL
+// ============================================================
 
 function fmtPnl(val){
-  const abs = Math.abs(Math.round(val*100)/100);
-  if(val > 0) return '+$'+abs;
-  if(val < 0) return '-$'+abs;
-  return '$0';
-}
-function pnlClass(val){ return val>0 ? 'pos' : (val<0 ? 'neg' : ''); }
 
-// ---------- DAILY RENDER ----------
+    const n =
+        Number(val) || 0;
+
+    const abs =
+        Math.abs(
+            Math.round(
+                n * 100
+            ) / 100
+        );
+
+    if(n > 0)
+        return '+$' + abs;
+
+    if(n < 0)
+        return '-$' + abs;
+
+    return '$0';
+}
+
+function pnlClass(val){
+
+    return val > 0
+        ? 'pos'
+        : val < 0
+            ? 'neg'
+            : '';
+}
+
+
+// ============================================================
+// RESULT CLASS
+// ============================================================
+
+function resultClass(
+    result
+){
+
+    if(result === 'SL')
+        return 'sl';
+
+    if(
+        result === 'PENDING'
+    )
+        return 'pending';
+
+    if(
+        result === 'NO SIGNAL'
+    )
+        return 'none';
+
+    return 'tp';
+}
+
+
+// ============================================================
+// DAILY
+// ============================================================
+
 async function renderDaily(){
-  const dateStr = state.selectedDate;
-  document.getElementById('dateInput').value = dateStr;
 
-  const latest = await findLatestDate();
-  document.getElementById('latestBadgeWrap').innerHTML =
-    (latest === dateStr) ? '<span class="latest-badge">● Tanggal terupdate</span>' : '';
+    const dateStr =
+        state.selectedDate;
 
-  const data = await loadDay(dateStr);
-  const stats = computeStats(data.signals);
+    document
+        .getElementById(
+            'dateInput'
+        )
+        .value =
+        dateStr;
 
-  document.getElementById('heroWinrate').innerHTML = stats.winrate+'<span class="pct">%</span>';
-  document.getElementById('statTotal').textContent = stats.total;
-  document.getElementById('statTp1').textContent = stats.tp1;
-  document.getElementById('statTp2').textContent = stats.tp2;
-  document.getElementById('statSl').textContent = stats.sl;
-  document.getElementById('heroPeriod').textContent = fmtDateLabel(dateStr) + ' · 07.00 — 02.00 WIB';
+    const latest =
+        await findLatestDate();
 
-  const pnlEl = document.getElementById('statPnl');
-  pnlEl.textContent = fmtPnl(stats.totalPnl);
-  pnlEl.className = 'val '+pnlClass(stats.totalPnl);
+    document
+        .getElementById(
+            'latestBadgeWrap'
+        )
+        .innerHTML =
+        latest === dateStr
+            ? '<span class="latest-badge">● Tanggal terupdate</span>'
+            : '';
 
-  renderSignalsList(data.signals || []);
+    const data =
+        await loadDay(
+            dateStr
+        );
 
-  const shotWrap = document.getElementById('shotWrap');
-  shotWrap.innerHTML = data.screenshot
-    ? '<div class="shot-frame"><img src="'+data.screenshot+'"></div>'
-    : '<div class="shot-empty">Belum ada screenshot untuk tanggal ini</div>';
+    const stats =
+        computeStats(
+            data.signals
+        );
 
-  renderAdminDailyPanel(data);
+    document
+        .getElementById(
+            'heroWinrate'
+        )
+        .innerHTML =
+        stats.winrate
+        + '<span class="pct">%</span>';
+
+    document
+        .getElementById(
+            'statTotal'
+        )
+        .textContent =
+        stats.total;
+
+    document
+        .getElementById(
+            'statTp1'
+        )
+        .textContent =
+        stats.tp1;
+
+    document
+        .getElementById(
+            'statTp2'
+        )
+        .textContent =
+        stats.tp2;
+
+    document
+        .getElementById(
+            'statSl'
+        )
+        .textContent =
+        stats.sl;
+
+    document
+        .getElementById(
+            'heroPeriod'
+        )
+        .textContent =
+        fmtDateLabel(dateStr)
+        + ' · 07.00 — 02.00 WIB';
+
+    const pnlEl =
+        document.getElementById(
+            'statPnl'
+        );
+
+    pnlEl.textContent =
+        fmtPnl(
+            stats.totalPnl
+        );
+
+    pnlEl.className =
+        'val ' +
+        pnlClass(
+            stats.totalPnl
+        );
+
+    renderSignalsList(
+        data.signals || []
+    );
+
+    const shotWrap =
+        document.getElementById(
+            'shotWrap'
+        );
+
+    shotWrap.innerHTML =
+        data.screenshot
+            ? `
+                <div class="shot-frame">
+                    <img
+                        src="${data.screenshot}"
+                        alt="Bukti PnL MT5"
+                    >
+                </div>
+            `
+            :
+            `
+                <div class="shot-empty">
+                    Belum ada screenshot
+                    untuk tanggal ini
+                </div>
+            `;
+
+    renderAdminDailyPanel(
+        data
+    );
 }
 
-function renderSignalsList(signals){
-  const wrap = document.getElementById('signalsListWrap');
-  if(!signals.length){
-    wrap.innerHTML = '<div class="signals-empty">Belum ada sinyal untuk tanggal ini</div>';
-    return;
-  }
-  const sorted = [...signals].sort((a,b)=> (a.time||'').localeCompare(b.time||''));
-  const head = '<div class="signal-row head"><span>Jam</span><span>Arah</span><span>Entry</span><span>Hasil</span><span style="text-align:right;">PnL</span></div>';
-  const rows = sorted.map(s=>{
-    const resClass = s.result==='SL' ? 'sl' : 'tp';
-    return '<div class="signal-row">'
-      + '<span>'+(s.time||'-')+'</span>'
-      + '<span class="dir '+(s.direction==='SELL'?'sell':'buy')+'">'+s.direction+'</span>'
-      + '<span>'+(s.entryPrice||'-')+'</span>'
-      + '<span class="res '+resClass+'">'+s.result+'</span>'
-      + '<span class="pnl '+pnlClass(parseFloat(s.pnl)||0)+'">'+fmtPnl(parseFloat(s.pnl)||0)+'</span>'
-      + '</div>';
-  }).join('');
-  wrap.innerHTML = head + rows;
-}
 
-function renderAdminDailyPanel(data){
-  const panel = document.getElementById('adminDailyPanel');
-  if(!state.isAdmin){ panel.innerHTML=''; return; }
+// ============================================================
+// PUBLIC SIGNAL LIST
+// ============================================================
 
-  const signals = data.signals || [];
+function renderSignalsList(
+    signals
+){
 
-  panel.innerHTML = `
-    <div class="admin-panel">
-      <h3>Tambah sinyal — ${fmtDateLabel(state.selectedDate)}</h3>
-      <div class="admin-signal-form">
-        <div class="field">
-          <label>Jam (contoh: 07.00)</label>
-          <input type="text" id="inTime" placeholder="07.00">
-        </div>
-        <div class="field">
-          <label>Arah</label>
-          <select id="inDirection">
-            <option value="BUY">Buy</option>
-            <option value="SELL">Sell</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Harga Entry (contoh: 3522)</label>
-          <input type="text" inputmode="numeric" id="inEntryPrice" placeholder="3522">
-        </div>
-        <div class="field">
-          <label>Hasil</label>
-          <select id="inResult">
-            <option value="TP1">TP 1</option>
-            <option value="TP2">TP 2</option>
-            <option value="SL">SL</option>
-          </select>
-        </div>
-        <div class="field" style="grid-column:span 2;">
-          <label>PnL dalam $ (boleh minus, contoh: -12.5 atau 25)</label>
-          <input type="number" step="any" id="inPnl" placeholder="0">
-        </div>
-      </div>
-      <button class="btn-primary" id="addSignalBtn">Tambah Signal</button>
-      <div class="save-msg" id="addSignalMsg"></div>
+    const wrap =
+        document.getElementById(
+            'signalsListWrap'
+        );
 
-      <div class="admin-signal-list" id="adminSignalList"></div>
+    if(!signals.length){
 
-      <hr class="admin-divider">
+        wrap.innerHTML =
+            `
+            <div class="signals-empty">
+                Belum ada sinyal
+                untuk tanggal ini
+            </div>
+            `;
 
-      <h3>Screenshot PnL (MT5)</h3>
-      <div class="field">
-        <input type="file" id="inFile" accept="image/*" style="display:none;">
-        <label for="inFile" class="file-btn">Pilih foto</label>
-        <span id="fileName" style="font-size:12px;color:var(--paper-dim);margin-left:8px;"></span>
-      </div>
-      <button class="btn-primary" id="saveShotBtn">Simpan screenshot</button>
-      <div class="save-msg" id="saveShotMsg"></div>
-    </div>
-  `;
-
-  renderAdminSignalList(signals);
-
-  document.getElementById('addSignalBtn').addEventListener('click', async ()=>{
-    const time = document.getElementById('inTime').value.trim();
-    const direction = document.getElementById('inDirection').value;
-    const entryPrice = document.getElementById('inEntryPrice').value.trim();
-    const result = document.getElementById('inResult').value;
-    const pnl = document.getElementById('inPnl').value;
-    const msg = document.getElementById('addSignalMsg');
-
-    if(!time || !entryPrice || pnl===''){
-      msg.textContent = 'Isi jam, harga entry, dan PnL dulu.';
-      return;
+        return;
     }
 
-    try{
-      await apiWrite('/api/day/'+state.selectedDate+'/signal', 'POST', { time, direction, entryPrice, result, pnl });
-      msg.textContent = 'Signal ditambahkan.';
-      document.getElementById('inTime').value='';
-      document.getElementById('inEntryPrice').value='';
-      document.getElementById('inPnl').value='';
-      renderDaily();
-    }catch(e){
-      msg.textContent = e.message || 'Gagal menyimpan, coba lagi.';
-    }
-  });
+    const sorted =
+        [...signals].sort(
+            (a,b) =>
+                (
+                    a.time || ''
+                )
+                .localeCompare(
+                    b.time || ''
+                )
+        );
 
-  let pendingScreenshot = data.screenshot || null;
-  document.getElementById('inFile').addEventListener('change', (e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
-    document.getElementById('fileName').textContent = file.name;
-    const reader = new FileReader();
-    reader.onload = ()=>{ pendingScreenshot = reader.result; };
-    reader.readAsDataURL(file);
-  });
+    const head =
+        `
+        <div class="signal-row head">
 
-  document.getElementById('saveShotBtn').addEventListener('click', async ()=>{
-    const msg = document.getElementById('saveShotMsg');
-    try{
-      await apiWrite('/api/day/'+state.selectedDate+'/screenshot', 'POST', { screenshot: pendingScreenshot });
-      msg.textContent = 'Screenshot tersimpan.';
-      renderDaily();
-    }catch(e){
-      msg.textContent = e.message || 'Gagal menyimpan, coba lagi.';
-    }
-  });
+            <span>Jam</span>
+
+            <span>Arah</span>
+
+            <span>Entry</span>
+
+            <span>TP1</span>
+
+            <span>TP2</span>
+
+            <span>SL</span>
+
+            <span>Hasil / PnL</span>
+
+        </div>
+        `;
+
+    const rows =
+        sorted
+        .map(
+            s => {
+
+                const result =
+                    s.result ||
+                    '-';
+
+                const cls =
+                    resultClass(
+                        result
+                    );
+
+                const pnl =
+                    parseFloat(
+                        s.pnl
+                    ) || 0;
+
+                return `
+                <div class="signal-row">
+
+                    <span>
+                        ${s.time || '-'}
+                    </span>
+
+                    <span class="dir ${
+                        s.direction === 'SELL'
+                            ? 'sell'
+                            : 'buy'
+                    }">
+                        ${s.direction || '-'}
+                    </span>
+
+                    <span>
+                        ${s.entryPrice || '-'}
+                    </span>
+
+                    <span>
+                        ${s.tp1Price || '-'}
+                    </span>
+
+                    <span>
+                        ${s.tp2Price || '-'}
+                    </span>
+
+                    <span>
+                        ${s.slPrice || '-'}
+                    </span>
+
+                    <span
+                        class="res ${cls}"
+                    >
+                        ${result}
+                        ${
+                            result !== 'PENDING' &&
+                            result !== 'NO SIGNAL'
+                                ? ' / ' + fmtPnl(pnl)
+                                : ''
+                        }
+                    </span>
+
+                </div>
+                `;
+            }
+        )
+        .join('');
+
+    wrap.innerHTML =
+        head +
+        rows;
 }
 
-function renderAdminSignalList(signals){
-  const wrap = document.getElementById('adminSignalList');
-  if(!signals.length){ wrap.innerHTML=''; return; }
-  const sorted = [...signals].sort((a,b)=> (a.time||'').localeCompare(b.time||''));
-  wrap.innerHTML = sorted.map(s=>{
-    const resClass = s.result==='SL' ? 'sl' : 'tp';
-    return '<div class="admin-signal-item">'
-      + '<span>'+(s.time||'-')+'</span>'
-      + '<span class="dir '+(s.direction==='SELL'?'sell':'buy')+'">'+s.direction+'</span>'
-      + '<span>'+(s.entryPrice||'-')+'</span>'
-      + '<span class="res '+resClass+'">'+s.result+'</span>'
-      + '<span class="pnl '+pnlClass(parseFloat(s.pnl)||0)+'">'+fmtPnl(parseFloat(s.pnl)||0)+'</span>'
-      + '<button class="del-btn" data-id="'+s.id+'">✕</button>'
-      + '</div>';
-  }).join('');
 
-  wrap.querySelectorAll('.del-btn').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const id = btn.getAttribute('data-id');
-      try{
-        await apiWrite('/api/day/'+state.selectedDate+'/signal/'+id, 'DELETE');
-        renderDaily();
-      }catch(e){
-        alert(e.message || 'Gagal menghapus, coba lagi.');
-      }
-    });
-  });
+// ============================================================
+// ADMIN PANEL
+// ============================================================
+
+function renderAdminDailyPanel(
+    data
+){
+
+    const panel =
+        document.getElementById(
+            'adminDailyPanel'
+        );
+
+    if(!state.isAdmin){
+
+        panel.innerHTML = '';
+
+        return;
+    }
+
+    const signals =
+        data.signals || [];
+
+    panel.innerHTML =
+        `
+        <div class="admin-panel">
+
+            <h3>
+                Tambah Signal —
+                ${fmtDateLabel(
+                    state.selectedDate
+                )}
+            </h3>
+
+            <div class="admin-signal-form">
+
+                <div class="field">
+
+                    <label>
+                        Jam
+                    </label>
+
+                    <input
+                        type="text"
+                        id="inTime"
+                        placeholder="07.00"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        Arah
+                    </label>
+
+                    <select
+                        id="inDirection"
+                    >
+
+                        <option value="BUY">
+                            BUY
+                        </option>
+
+                        <option value="SELL">
+                            SELL
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        Status / Hasil
+                    </label>
+
+                    <select
+                        id="inResult"
+                    >
+
+                        <option value="TP1">
+                            TP 1
+                        </option>
+
+                        <option value="TP2">
+                            TP 2
+                        </option>
+
+                        <option value="SL">
+                            SL
+                        </option>
+
+                        <option value="PENDING">
+                            PENDING
+                        </option>
+
+                        <option value="NO SIGNAL">
+                            NO SIGNAL
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        Harga Entry
+                    </label>
+
+                    <input
+                        type="text"
+                        inputmode="decimal"
+                        id="inEntryPrice"
+                        placeholder="3522.50"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        Harga TP1
+                    </label>
+
+                    <input
+                        type="text"
+                        inputmode="decimal"
+                        id="inTp1Price"
+                        placeholder="3530.00"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        Harga TP2
+                    </label>
+
+                    <input
+                        type="text"
+                        inputmode="decimal"
+                        id="inTp2Price"
+                        placeholder="3537.50"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        Harga SL
+                    </label>
+
+                    <input
+                        type="text"
+                        inputmode="decimal"
+                        id="inSlPrice"
+                        placeholder="3517.50"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        PnL ($)
+                    </label>
+
+                    <input
+                        type="number"
+                        step="any"
+                        id="inPnl"
+                        placeholder="0"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <button
+                class="btn-primary"
+                id="addSignalBtn"
+            >
+                + Tambah Signal
+            </button>
+
+            <div
+                class="save-msg"
+                id="addSignalMsg"
+            ></div>
+
+
+            <div
+                class="admin-signal-list"
+                id="adminSignalList"
+            ></div>
+
+
+            <hr class="admin-divider">
+
+
+            <h3>
+                Screenshot PnL (MT5)
+            </h3>
+
+            <div class="field">
+
+                <input
+                    type="file"
+                    id="inFile"
+                    accept="image/*"
+                    style="display:none;"
+                >
+
+                <label
+                    for="inFile"
+                    style="
+                        display:inline-block;
+                        padding:10px 16px;
+                        background:var(--surface);
+                        border:1px solid var(--hairline-strong);
+                        border-radius:6px;
+                        font-size:13px;
+                        color:var(--paper);
+                        cursor:pointer;
+                    "
+                >
+                    Pilih foto
+                </label>
+
+                <span
+                    id="fileName"
+                    style="
+                        font-size:12px;
+                        color:var(--paper-dim);
+                        margin-left:8px;
+                    "
+                ></span>
+
+            </div>
+
+
+            <button
+                class="btn-primary"
+                id="saveShotBtn"
+            >
+                Simpan Screenshot
+            </button>
+
+            <div
+                class="save-msg"
+                id="saveShotMsg"
+            ></div>
+
+        </div>
+        `;
+
+
+    renderAdminSignalList(
+        signals
+    );
+
+
+    // ========================================================
+    // ADD SIGNAL
+    // ========================================================
+
+    document
+        .getElementById(
+            'addSignalBtn'
+        )
+        .addEventListener(
+            'click',
+            async () => {
+
+                const time =
+                    document
+                    .getElementById(
+                        'inTime'
+                    )
+                    .value
+                    .trim();
+
+                const direction =
+                    document
+                    .getElementById(
+                        'inDirection'
+                    )
+                    .value;
+
+                const result =
+                    document
+                    .getElementById(
+                        'inResult'
+                    )
+                    .value;
+
+                const entryPrice =
+                    document
+                    .getElementById(
+                        'inEntryPrice'
+                    )
+                    .value
+                    .trim();
+
+                const tp1Price =
+                    document
+                    .getElementById(
+                        'inTp1Price'
+                    )
+                    .value
+                    .trim();
+
+                const tp2Price =
+                    document
+                    .getElementById(
+                        'inTp2Price'
+                    )
+                    .value
+                    .trim();
+
+                const slPrice =
+                    document
+                    .getElementById(
+                        'inSlPrice'
+                    )
+                    .value
+                    .trim();
+
+                const pnl =
+                    document
+                    .getElementById(
+                        'inPnl'
+                    )
+                    .value;
+
+                const msg =
+                    document
+                    .getElementById(
+                        'addSignalMsg'
+                    );
+
+
+                if(!time){
+
+                    msg.textContent =
+                        'Jam wajib diisi.';
+
+                    return;
+                }
+
+
+                if(
+                    result !== 'NO SIGNAL' &&
+                    !entryPrice
+                ){
+
+                    msg.textContent =
+                        'Harga entry wajib diisi.';
+
+                    return;
+                }
+
+
+                try{
+
+                    await apiWrite(
+                        '/api/day/' +
+                        state.selectedDate +
+                        '/signal',
+
+                        'POST',
+
+                        {
+                            time,
+                            direction,
+                            entryPrice,
+                            tp1Price,
+                            tp2Price,
+                            slPrice,
+                            result,
+                            pnl:
+                                pnl === ''
+                                    ? 0
+                                    : pnl
+                        }
+                    );
+
+
+                    msg.textContent =
+                        '✓ Signal berhasil ditambahkan.';
+
+
+                    document
+                        .getElementById(
+                            'inTime'
+                        )
+                        .value = '';
+
+                    document
+                        .getElementById(
+                            'inEntryPrice'
+                        )
+                        .value = '';
+
+                    document
+                        .getElementById(
+                            'inTp1Price'
+                        )
+                        .value = '';
+
+                    document
+                        .getElementById(
+                            'inTp2Price'
+                        )
+                        .value = '';
+
+                    document
+                        .getElementById(
+                            'inSlPrice'
+                        )
+                        .value = '';
+
+                    document
+                        .getElementById(
+                            'inPnl'
+                        )
+                        .value = '';
+
+
+                    await renderDaily();
+
+                }catch(e){
+
+                    msg.textContent =
+                        e.message ||
+                        'Gagal menyimpan.';
+                }
+            }
+        );
+
+
+    // ========================================================
+    // SCREENSHOT
+    // ========================================================
+
+    let pendingScreenshot =
+        data.screenshot || null;
+
+
+    document
+        .getElementById(
+            'inFile'
+        )
+        .addEventListener(
+            'change',
+            e => {
+
+                const file =
+                    e.target.files[0];
+
+                if(!file)
+                    return;
+
+                document
+                    .getElementById(
+                        'fileName'
+                    )
+                    .textContent =
+                    file.name;
+
+                const reader =
+                    new FileReader();
+
+                reader.onload =
+                    () => {
+
+                        pendingScreenshot =
+                            reader.result;
+                    };
+
+                reader.readAsDataURL(
+                    file
+                );
+            }
+        );
+
+
+    document
+        .getElementById(
+            'saveShotBtn'
+        )
+        .addEventListener(
+            'click',
+            async () => {
+
+                const msg =
+                    document
+                    .getElementById(
+                        'saveShotMsg'
+                    );
+
+                if(!pendingScreenshot){
+
+                    msg.textContent =
+                        'Pilih screenshot terlebih dahulu.';
+
+                    return;
+                }
+
+                try{
+
+                    await apiWrite(
+                        '/api/day/' +
+                        state.selectedDate +
+                        '/screenshot',
+
+                        'POST',
+
+                        {
+                            screenshot:
+                                pendingScreenshot
+                        }
+                    );
+
+                    msg.textContent =
+                        '✓ Screenshot tersimpan.';
+
+                    await renderDaily();
+
+                }catch(e){
+
+                    msg.textContent =
+                        e.message ||
+                        'Gagal menyimpan screenshot.';
+                }
+            }
+        );
 }
 
-// ---------- MONTHLY RENDER ----------
+
+// ============================================================
+// ADMIN SIGNAL LIST
+// ============================================================
+
+function renderAdminSignalList(
+    signals
+){
+
+    const wrap =
+        document.getElementById(
+            'adminSignalList'
+        );
+
+    if(!signals.length){
+
+        wrap.innerHTML = '';
+
+        return;
+    }
+
+
+    const sorted =
+        [...signals].sort(
+            (a,b) =>
+                (
+                    a.time || ''
+                )
+                .localeCompare(
+                    b.time || ''
+                )
+        );
+
+
+    wrap.innerHTML =
+        sorted
+        .map(
+            s => {
+
+                const pnl =
+                    parseFloat(
+                        s.pnl
+                    ) || 0;
+
+                const cls =
+                    resultClass(
+                        s.result
+                    );
+
+                return `
+                <div
+                    class="admin-signal-item"
+                >
+
+                    <span>
+                        ${s.time || '-'}
+                    </span>
+
+                    <span class="dir ${
+                        s.direction === 'SELL'
+                            ? 'sell'
+                            : 'buy'
+                    }">
+                        ${s.direction || '-'}
+                    </span>
+
+                    <span>
+                        ${s.entryPrice || '-'}
+                    </span>
+
+                    <span>
+                        ${s.tp1Price || '-'}
+                    </span>
+
+                    <span>
+                        ${s.tp2Price || '-'}
+                    </span>
+
+                    <span>
+                        ${s.slPrice || '-'}
+                    </span>
+
+                    <span
+                        class="res ${cls}"
+                    >
+                        ${s.result || '-'}
+                    </span>
+
+                    <span>
+                        <button
+                            class="del-btn"
+                            data-id="${s.id}"
+                        >
+                            ✕
+                        </button>
+                    </span>
+
+                </div>
+                `;
+            }
+        )
+        .join('');
+
+
+    wrap
+        .querySelectorAll(
+            '.del-btn'
+        )
+        .forEach(
+            btn => {
+
+                btn.addEventListener(
+                    'click',
+                    async () => {
+
+                        const id =
+                            btn.getAttribute(
+                                'data-id'
+                            );
+
+                        if(
+                            !confirm(
+                                'Hapus signal ini?'
+                            )
+                        ){
+
+                            return;
+                        }
+
+                        try{
+
+                            await apiWrite(
+                                '/api/day/' +
+                                state.selectedDate +
+                                '/signal/' +
+                                id,
+
+                                'DELETE'
+                            );
+
+                            await renderDaily();
+
+                        }catch(e){
+
+                            alert(
+                                e.message ||
+                                'Gagal menghapus.'
+                            );
+                        }
+                    }
+                );
+            }
+        );
+}
+
+
+// ============================================================
+// MONTHLY
+// ============================================================
+
 async function renderMonthly(){
-  const monthStr = state.selectedMonth;
-  document.getElementById('monthInput').value = monthStr;
 
-  const monthData = await loadMonth(monthStr);
-  let total=0, tp1=0, tp2=0, sl=0, totalPnl=0;
-  const rows = [];
-  Object.keys(monthData).forEach(d=>{
-    const s = computeStats(monthData[d].signals);
-    total += s.total; tp1 += s.tp1; tp2 += s.tp2; sl += s.sl; totalPnl += s.totalPnl;
-    rows.push({date:d, stats:s});
-  });
+    const monthStr =
+        state.selectedMonth;
 
-  const monthWinrate = total ? Math.round(((tp1+tp2)/total)*1000)/10 : 0;
-  document.getElementById('monthWinrate').innerHTML = monthWinrate+'<span class="pct">%</span>';
-  document.getElementById('monthTotal').textContent = total;
-  document.getElementById('monthTp1').textContent = tp1;
-  document.getElementById('monthTp2').textContent = tp2;
-  document.getElementById('monthSl').textContent = sl;
-  const monthPnlEl = document.getElementById('monthPnl');
-  monthPnlEl.textContent = fmtPnl(totalPnl);
-  monthPnlEl.className = 'val '+pnlClass(totalPnl);
+    document
+        .getElementById(
+            'monthInput'
+        )
+        .value =
+        monthStr;
 
-  const ledger = document.getElementById('ledgerList');
-  if(rows.length===0){
-    ledger.innerHTML = '<div class="ledger-empty">Belum ada data pada bulan ini</div>';
-    return;
-  }
-  rows.sort((a,b)=> b.date.localeCompare(a.date));
-  ledger.innerHTML = rows.map(r=>{
-    return '<div class="ledger-row" data-date="'+r.date+'">'
-      + '<div class="ledger-date">'+r.date+'</div>'
-      + '<div class="ledger-mid"><span>'+r.stats.total+' sinyal</span><span>TP '+(r.stats.tp1+r.stats.tp2)+'</span><span>SL '+r.stats.sl+'</span></div>'
-      + '<div class="ledger-win">'+r.stats.winrate+'%</div>'
-      + '</div>';
-  }).join('');
 
-  ledger.querySelectorAll('.ledger-row').forEach(row=>{
-    row.addEventListener('click', ()=>{
-      state.selectedDate = row.getAttribute('data-date');
-      switchView('daily');
-    });
-  });
-}
+    const monthData =
+        await loadMonth(
+            monthStr
+        );
 
-// ---------- VIEW SWITCH ----------
-function switchView(view){
-  state.view = view;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===view));
-  document.getElementById('dailyView').style.display = view==='daily' ? 'block':'none';
-  document.getElementById('monthlyView').style.display = view==='monthly' ? 'block':'none';
-  if(view==='daily') renderDaily(); else renderMonthly();
-}
 
-// ---------- ADMIN AUTH ----------
-function showLoginModal(){
-  const root = document.getElementById('modalRoot');
-  root.innerHTML = `
-    <div class="modal-bg" id="modalBg">
-      <div class="modal">
-        <h3>Masuk sebagai Admin</h3>
-        <div class="field">
-          <input type="password" id="pwInput" placeholder="Kata sandi admin">
-        </div>
-        <button class="btn-primary" id="pwSubmit">Masuk</button>
-        <button class="btn-ghost" id="pwCancel">Batal</button>
-        <div class="error" id="pwError"></div>
-      </div>
-    </div>
-  `;
-  document.getElementById('pwCancel').addEventListener('click', ()=>{ root.innerHTML=''; });
-  document.getElementById('modalBg').addEventListener('click', (e)=>{ if(e.target.id==='modalBg') root.innerHTML=''; });
-  document.getElementById('pwSubmit').addEventListener('click', async ()=>{
-    const val = document.getElementById('pwInput').value;
-    try{
-      const res = await fetch('/api/admin/verify', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({password: val})
-      });
-      const data = await res.json();
-      if(data.ok){
-        state.isAdmin = true;
-        state.adminPassword = val;
-        sessionStorage.setItem('admin_pw', val);
-        root.innerHTML='';
-        renderAdminUI();
-        renderDaily();
-      }else{
-        document.getElementById('pwError').textContent = 'Kata sandi salah.';
-      }
-    }catch(e){
-      document.getElementById('pwError').textContent = 'Gagal menghubungi server.';
+    let total = 0;
+    let tp1 = 0;
+    let tp2 = 0;
+    let sl = 0;
+    let totalPnl = 0;
+
+    const rows = [];
+
+
+    Object.keys(
+        monthData
+    )
+    .forEach(
+        d => {
+
+            const stats =
+                computeStats(
+                    monthData[d].signals
+                );
+
+            total +=
+                stats.total;
+
+            tp1 +=
+                stats.tp1;
+
+            tp2 +=
+                stats.tp2;
+
+            sl +=
+                stats.sl;
+
+            totalPnl +=
+                stats.totalPnl;
+
+            rows.push({
+                date:d,
+                stats
+            });
+        }
+    );
+
+
+    const decided =
+        tp1 +
+        tp2 +
+        sl;
+
+    const monthWinrate =
+        decided
+            ? Math.round(
+                (
+                    (
+                        tp1 +
+                        tp2
+                    ) /
+                    decided
+                ) *
+                1000
+            ) / 10
+            : 0;
+
+
+    document
+        .getElementById(
+            'monthWinrate'
+        )
+        .innerHTML =
+        monthWinrate +
+        '<span class="pct">%</span>';
+
+
+    document
+        .getElementById(
+            'monthTotal'
+        )
+        .textContent =
+        total;
+
+    document
+        .getElementById(
+            'monthTp1'
+        )
+        .textContent =
+        tp1;
+
+    document
+        .getElementById(
+            'monthTp2'
+        )
+        .textContent =
+        tp2;
+
+    document
+        .getElementById(
+            'monthSl'
+        )
+        .textContent =
+        sl;
+
+
+    const pnlEl =
+        document.getElementById(
+            'monthPnl'
+        );
+
+    pnlEl.textContent =
+        fmtPnl(
+            totalPnl
+        );
+
+    pnlEl.className =
+        'val ' +
+        pnlClass(
+            totalPnl
+        );
+
+
+    const ledger =
+        document.getElementById(
+            'ledgerList'
+        );
+
+
+    if(!rows.length){
+
+        ledger.innerHTML =
+            `
+            <div class="ledger-empty">
+                Belum ada data pada bulan ini
+            </div>
+            `;
+
+        return;
     }
-  });
-  document.getElementById('pwInput').addEventListener('keydown', (e)=>{
-    if(e.key==='Enter') document.getElementById('pwSubmit').click();
-  });
+
+
+    rows.sort(
+        (a,b) =>
+            b.date.localeCompare(
+                a.date
+            )
+    );
+
+
+    ledger.innerHTML =
+        rows
+        .map(
+            r => {
+
+                return `
+                <div
+                    class="ledger-row"
+                    data-date="${r.date}"
+                >
+
+                    <div class="ledger-date">
+                        ${r.date}
+                    </div>
+
+                    <div class="ledger-mid">
+
+                        <span>
+                            ${r.stats.total}
+                            sinyal
+                        </span>
+
+                        <span>
+                            TP
+                            ${r.stats.tp1 + r.stats.tp2}
+                        </span>
+
+                        <span>
+                            SL
+                            ${r.stats.sl}
+                        </span>
+
+                    </div>
+
+                    <div class="ledger-win">
+                        ${r.stats.winrate}%
+                    </div>
+
+                </div>
+                `;
+            }
+        )
+        .join('');
+
+
+    ledger
+        .querySelectorAll(
+            '.ledger-row'
+        )
+        .forEach(
+            row => {
+
+                row.addEventListener(
+                    'click',
+                    () => {
+
+                        state.selectedDate =
+                            row.getAttribute(
+                                'data-date'
+                            );
+
+                        switchView(
+                            'daily'
+                        );
+                    }
+                );
+            }
+        );
 }
+
+
+// ============================================================
+// VIEW
+// ============================================================
+
+function switchView(
+    view
+){
+
+    state.view =
+        view;
+
+
+    document
+        .querySelectorAll(
+            '.tab'
+        )
+        .forEach(
+            t =>
+                t.classList.toggle(
+                    'active',
+                    t.dataset.view === view
+                )
+        );
+
+
+    document
+        .getElementById(
+            'dailyView'
+        )
+        .style.display =
+        view === 'daily'
+            ? 'block'
+            : 'none';
+
+
+    document
+        .getElementById(
+            'monthlyView'
+        )
+        .style.display =
+        view === 'monthly'
+            ? 'block'
+            : 'none';
+
+
+    if(
+        view === 'daily'
+    ){
+
+        renderDaily();
+
+    }else{
+
+        renderMonthly();
+    }
+}
+
+
+// ============================================================
+// ADMIN LOGIN
+// ============================================================
+
+function showLoginModal(){
+
+    const root =
+        document.getElementById(
+            'modalRoot'
+        );
+
+
+    root.innerHTML =
+        `
+        <div
+            class="modal-bg"
+            id="modalBg"
+        >
+
+            <div class="modal">
+
+                <h3>
+                    Masuk sebagai Admin
+                </h3>
+
+                <div class="field">
+
+                    <input
+                        type="password"
+                        id="pwInput"
+                        placeholder="Kata sandi admin"
+                    >
+
+                </div>
+
+                <button
+                    class="btn-primary"
+                    id="pwSubmit"
+                >
+                    Masuk
+                </button>
+
+                <button
+                    class="btn-ghost"
+                    id="pwCancel"
+                >
+                    Batal
+                </button>
+
+                <div
+                    class="error"
+                    id="pwError"
+                ></div>
+
+            </div>
+
+        </div>
+        `;
+
+
+    document
+        .getElementById(
+            'pwCancel'
+        )
+        .addEventListener(
+            'click',
+            () => {
+
+                root.innerHTML = '';
+            }
+        );
+
+
+    document
+        .getElementById(
+            'modalBg'
+        )
+        .addEventListener(
+            'click',
+            e => {
+
+                if(
+                    e.target.id ===
+                    'modalBg'
+                ){
+
+                    root.innerHTML = '';
+                }
+            }
+        );
+
+
+    document
+        .getElementById(
+            'pwSubmit'
+        )
+        .addEventListener(
+            'click',
+            async () => {
+
+                const val =
+                    document
+                    .getElementById(
+                        'pwInput'
+                    )
+                    .value;
+
+
+                try{
+
+                    const res =
+                        await fetch(
+                            '/api/admin/verify',
+                            {
+                                method:'POST',
+
+                                headers:{
+                                    'Content-Type':
+                                        'application/json'
+                                },
+
+                                body:
+                                    JSON.stringify({
+                                        password:val
+                                    })
+                            }
+                        );
+
+
+                    const data =
+                        await res.json();
+
+
+                    if(data.ok){
+
+                        state.isAdmin =
+                            true;
+
+                        state.adminPassword =
+                            val;
+
+                        sessionStorage.setItem(
+                            'admin_pw',
+                            val
+                        );
+
+                        root.innerHTML = '';
+
+                        renderAdminUI();
+
+                        renderDaily();
+
+                    }else{
+
+                        document
+                            .getElementById(
+                                'pwError'
+                            )
+                            .textContent =
+                            'Kata sandi salah.';
+                    }
+
+                }catch(e){
+
+                    document
+                        .getElementById(
+                            'pwError'
+                        )
+                        .textContent =
+                        'Gagal menghubungi server.';
+                }
+            }
+        );
+
+
+    document
+        .getElementById(
+            'pwInput'
+        )
+        .addEventListener(
+            'keydown',
+            e => {
+
+                if(
+                    e.key === 'Enter'
+                ){
+
+                    document
+                        .getElementById(
+                            'pwSubmit'
+                        )
+                        .click();
+                }
+            }
+        );
+}
+
+
+// ============================================================
+// ADMIN UI
+// ============================================================
 
 function renderAdminUI(){
-  const btn = document.getElementById('adminToggleBtn');
-  btn.outerHTML = '<button class="admin-pill" id="adminToggleBtn">● Admin</button>';
-  document.getElementById('adminToggleBtn').addEventListener('click', ()=>{
-    state.isAdmin = false;
-    state.adminPassword = null;
-    sessionStorage.removeItem('admin_pw');
-    renderLogoutUI();
-    renderDaily();
-  });
+
+    const btn =
+        document.getElementById(
+            'adminToggleBtn'
+        );
+
+
+    btn.outerHTML =
+        `
+        <button
+            class="admin-pill"
+            id="adminToggleBtn"
+        >
+            ● Admin
+        </button>
+        `;
+
+
+    document
+        .getElementById(
+            'adminToggleBtn'
+        )
+        .addEventListener(
+            'click',
+            () => {
+
+                state.isAdmin =
+                    false;
+
+                state.adminPassword =
+                    null;
+
+                sessionStorage.removeItem(
+                    'admin_pw'
+                );
+
+                renderLogoutUI();
+
+                renderDaily();
+            }
+        );
 }
+
+
 function renderLogoutUI(){
-  const btn = document.getElementById('adminToggleBtn');
-  btn.outerHTML = '<button class="admin-toggle" id="adminToggleBtn">Admin</button>';
-  document.getElementById('adminToggleBtn').addEventListener('click', showLoginModal);
+
+    const btn =
+        document.getElementById(
+            'adminToggleBtn'
+        );
+
+
+    btn.outerHTML =
+        `
+        <button
+            class="admin-toggle"
+            id="adminToggleBtn"
+        >
+            Admin
+        </button>
+        `;
+
+
+    document
+        .getElementById(
+            'adminToggleBtn'
+        )
+        .addEventListener(
+            'click',
+            showLoginModal
+        );
 }
 
-// ---------- INIT ----------
+
+// ============================================================
+// INIT
+// ============================================================
+
 async function init(){
-  const today = new Date();
-  const latest = await findLatestDate();
-  const todayStr = toDateStr(today);
-  state.selectedDate = latest || todayStr;
-  state.selectedMonth = toMonthStr(new Date(state.selectedDate+'T00:00:00'));
 
-  const savedPw = sessionStorage.getItem('admin_pw');
-  if(savedPw){
-    try{
-      const res = await fetch('/api/admin/verify', {
-        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: savedPw})
-      });
-      const data = await res.json();
-      if(data.ok){ state.isAdmin = true; state.adminPassword = savedPw; }
-    }catch(e){}
-  }
+    const today =
+        new Date();
 
-  if(state.isAdmin) renderAdminUI();
-  else document.getElementById('adminToggleBtn').addEventListener('click', showLoginModal);
 
-  document.querySelectorAll('.tab').forEach(t=>{
-    t.addEventListener('click', ()=>switchView(t.dataset.view));
-  });
+    const latest =
+        await findLatestDate();
 
-  document.getElementById('dateInput').addEventListener('change', (e)=>{
-    state.selectedDate = e.target.value;
+
+    const todayStr =
+        toDateStr(
+            today
+        );
+
+
+    state.selectedDate =
+        latest ||
+        todayStr;
+
+
+    state.selectedMonth =
+        toMonthStr(
+            new Date(
+                state.selectedDate +
+                'T00:00:00'
+            )
+        );
+
+
+    const savedPw =
+        sessionStorage.getItem(
+            'admin_pw'
+        );
+
+
+    if(savedPw){
+
+        try{
+
+            const res =
+                await fetch(
+                    '/api/admin/verify',
+                    {
+                        method:'POST',
+
+                        headers:{
+                            'Content-Type':
+                                'application/json'
+                        },
+
+                        body:
+                            JSON.stringify({
+                                password:
+                                    savedPw
+                            })
+                    }
+                );
+
+
+            const data =
+                await res.json();
+
+
+            if(data.ok){
+
+                state.isAdmin =
+                    true;
+
+                state.adminPassword =
+                    savedPw;
+            }
+
+        }catch(e){}
+    }
+
+
+    if(state.isAdmin){
+
+        renderAdminUI();
+
+    }else{
+
+        document
+            .getElementById(
+                'adminToggleBtn'
+            )
+            .addEventListener(
+                'click',
+                showLoginModal
+            );
+    }
+
+
+    document
+        .querySelectorAll(
+            '.tab'
+        )
+        .forEach(
+            t => {
+
+                t.addEventListener(
+                    'click',
+                    () =>
+                        switchView(
+                            t.dataset.view
+                        )
+                );
+            }
+        );
+
+
+    document
+        .getElementById(
+            'dateInput'
+        )
+        .addEventListener(
+            'change',
+            e => {
+
+                state.selectedDate =
+                    e.target.value;
+
+                renderDaily();
+            }
+        );
+
+
+    document
+        .getElementById(
+            'prevDay'
+        )
+        .addEventListener(
+            'click',
+            () => {
+
+                const d =
+                    new Date(
+                        state.selectedDate +
+                        'T00:00:00'
+                    );
+
+                d.setDate(
+                    d.getDate() - 1
+                );
+
+                state.selectedDate =
+                    toDateStr(d);
+
+                renderDaily();
+            }
+        );
+
+
+    document
+        .getElementById(
+            'nextDay'
+        )
+        .addEventListener(
+            'click',
+            () => {
+
+                const d =
+                    new Date(
+                        state.selectedDate +
+                        'T00:00:00'
+                    );
+
+                d.setDate(
+                    d.getDate() + 1
+                );
+
+                state.selectedDate =
+                    toDateStr(d);
+
+                renderDaily();
+            }
+        );
+
+
+    document
+        .getElementById(
+            'monthInput'
+        )
+        .addEventListener(
+            'change',
+            e => {
+
+                state.selectedMonth =
+                    e.target.value;
+
+                renderMonthly();
+            }
+        );
+
+
+    document
+        .getElementById(
+            'prevMonth'
+        )
+        .addEventListener(
+            'click',
+            () => {
+
+                const [
+                    y,
+                    m
+                ] =
+                    state.selectedMonth
+                    .split('-')
+                    .map(Number);
+
+                const d =
+                    new Date(
+                        y,
+                        m - 2,
+                        1
+                    );
+
+                state.selectedMonth =
+                    toMonthStr(d);
+
+                renderMonthly();
+            }
+        );
+
+
+    document
+        .getElementById(
+            'nextMonth'
+        )
+        .addEventListener(
+            'click',
+            () => {
+
+                const [
+                    y,
+                    m
+                ] =
+                    state.selectedMonth
+                    .split('-')
+                    .map(Number);
+
+                const d =
+                    new Date(
+                        y,
+                        m,
+                        1
+                    );
+
+                state.selectedMonth =
+                    toMonthStr(d);
+
+                renderMonthly();
+            }
+        );
+
+
     renderDaily();
-  });
-  document.getElementById('prevDay').addEventListener('click', ()=>{
-    const d = new Date(state.selectedDate+'T00:00:00');
-    d.setDate(d.getDate()-1);
-    state.selectedDate = toDateStr(d);
-    renderDaily();
-  });
-  document.getElementById('nextDay').addEventListener('click', ()=>{
-    const d = new Date(state.selectedDate+'T00:00:00');
-    d.setDate(d.getDate()+1);
-    state.selectedDate = toDateStr(d);
-    renderDaily();
-  });
-
-  document.getElementById('monthInput').addEventListener('change', (e)=>{
-    state.selectedMonth = e.target.value;
-    renderMonthly();
-  });
-  document.getElementById('prevMonth').addEventListener('click', ()=>{
-    const [y,m] = state.selectedMonth.split('-').map(Number);
-    const d = new Date(y, m-2, 1);
-    state.selectedMonth = toMonthStr(d);
-    renderMonthly();
-  });
-  document.getElementById('nextMonth').addEventListener('click', ()=>{
-    const [y,m] = state.selectedMonth.split('-').map(Number);
-    const d = new Date(y, m, 1);
-    state.selectedMonth = toMonthStr(d);
-    renderMonthly();
-  });
-
-  renderDaily();
 }
 
 init();
+
 </script>
+
 </body>
 </html>
