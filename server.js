@@ -18,29 +18,138 @@ const PORT = process.env.PORT || 3000;
 const ROOT_DIR = __dirname;
 const PUBLIC_DIR = ROOT_DIR;
 
-const DATA_FILE = path.join(ROOT_DIR, "journal-data.json");
+const DATA_DIR = path.join(ROOT_DIR, "data");
+const DATA_FILE = path.join(DATA_DIR, "journal.json");
 
 // ============================================================
 // ADMIN PASSWORD
 // ============================================================
-//
-// Bisa diganti melalui Environment Variable:
-//
-// ADMIN_PASSWORD=Bira1234_
-//
-// Jika Environment Variable belum dibuat,
-// password default = Bira1234_
-//
 
 const ADMIN_PASSWORD =
     process.env.ADMIN_PASSWORD || "Bira1234_";
 
 // ============================================================
-// MIDDLEWARE
+// CREATE DATA DIRECTORY
 // ============================================================
 
-app.use(express.json({ limit: "20mb" }));
-app.use(express.urlencoded({ extended: true, limit: "20mb" }));
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, {
+        recursive: true
+    });
+}
+
+// ============================================================
+// CREATE DATABASE FILE
+// ============================================================
+
+if (!fs.existsSync(DATA_FILE)) {
+    fs.writeFileSync(
+        DATA_FILE,
+        JSON.stringify({
+            days: {}
+        }, null, 2),
+        "utf8"
+    );
+}
+
+// ============================================================
+// DATA HELPERS
+// ============================================================
+
+function loadDatabase() {
+    try {
+        const raw = fs.readFileSync(DATA_FILE, "utf8");
+
+        if (!raw.trim()) {
+            return {
+                days: {}
+            };
+        }
+
+        const data = JSON.parse(raw);
+
+        if (!data.days) {
+            data.days = {};
+        }
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "❌ Gagal membaca journal.json:",
+            error
+        );
+
+        return {
+            days: {}
+        };
+    }
+}
+
+function saveDatabase(data) {
+
+    const tempFile = DATA_FILE + ".tmp";
+
+    fs.writeFileSync(
+        tempFile,
+        JSON.stringify(data, null, 2),
+        "utf8"
+    );
+
+    fs.renameSync(
+        tempFile,
+        DATA_FILE
+    );
+}
+
+function ensureDay(data, date) {
+
+    if (!data.days[date]) {
+
+        data.days[date] = {
+            signals: [],
+            screenshot: null
+        };
+    }
+
+    if (!Array.isArray(data.days[date].signals)) {
+        data.days[date].signals = [];
+    }
+
+    return data.days[date];
+}
+
+// ============================================================
+// ID GENERATOR
+// ============================================================
+
+function generateId() {
+
+    return (
+        Date.now().toString(36) +
+        Math.random()
+            .toString(36)
+            .substring(2, 8)
+    );
+}
+
+// ============================================================
+// APP MIDDLEWARE
+// ============================================================
+
+app.use(
+    express.json({
+        limit: "15mb"
+    })
+);
+
+app.use(
+    express.urlencoded({
+        extended: true,
+        limit: "15mb"
+    })
+);
 
 // ============================================================
 // SECURITY HEADERS
@@ -79,149 +188,22 @@ app.use(
 );
 
 // ============================================================
-// DATABASE / JSON STORAGE
-// ============================================================
-
-function createEmptyDatabase() {
-    return {
-        days: {}
-    };
-}
-
-function loadDatabase() {
-
-    try {
-
-        if (!fs.existsSync(DATA_FILE)) {
-
-            const empty = createEmptyDatabase();
-
-            fs.writeFileSync(
-                DATA_FILE,
-                JSON.stringify(empty, null, 2),
-                "utf8"
-            );
-
-            return empty;
-        }
-
-        const raw = fs.readFileSync(
-            DATA_FILE,
-            "utf8"
-        );
-
-        if (!raw.trim()) {
-            return createEmptyDatabase();
-        }
-
-        const data = JSON.parse(raw);
-
-        if (!data.days || typeof data.days !== "object") {
-            data.days = {};
-        }
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "❌ Gagal membaca journal-data.json:"
-        );
-
-        console.error(error);
-
-        return createEmptyDatabase();
-    }
-}
-
-let database = loadDatabase();
-
-function saveDatabase() {
-
-    try {
-
-        const tempFile = DATA_FILE + ".tmp";
-
-        fs.writeFileSync(
-            tempFile,
-            JSON.stringify(database, null, 2),
-            "utf8"
-        );
-
-        fs.renameSync(
-            tempFile,
-            DATA_FILE
-        );
-
-        return true;
-
-    } catch (error) {
-
-        console.error(
-            "❌ Gagal menyimpan database:"
-        );
-
-        console.error(error);
-
-        return false;
-    }
-}
-
-// ============================================================
-// DATE HELPERS
-// ============================================================
-
-function isValidDate(date) {
-    return /^\d{4}-\d{2}-\d{2}$/.test(date);
-}
-
-function isValidMonth(month) {
-    return /^\d{4}-\d{2}$/.test(month);
-}
-
-function ensureDay(date) {
-
-    if (!database.days[date]) {
-
-        database.days[date] = {
-            signals: [],
-            screenshot: null
-        };
-    }
-
-    if (!Array.isArray(database.days[date].signals)) {
-        database.days[date].signals = [];
-    }
-
-    if (!("screenshot" in database.days[date])) {
-        database.days[date].screenshot = null;
-    }
-
-    return database.days[date];
-}
-
-// ============================================================
-// ADMIN AUTHENTICATION
+// ADMIN AUTH MIDDLEWARE
 // ============================================================
 
 function requireAdmin(req, res, next) {
 
     const password =
-        req.headers["x-admin-password"] || "";
+        req.headers["x-admin-password"];
 
-    if (!password) {
+    if (
+        !password ||
+        password !== ADMIN_PASSWORD
+    ) {
 
         return res.status(401).json({
             success: false,
-            error: "Password admin diperlukan"
-        });
-    }
-
-    if (password !== ADMIN_PASSWORD) {
-
-        return res.status(403).json({
-            success: false,
-            error: "Password admin salah"
+            error: "Akses admin ditolak."
         });
     }
 
@@ -229,171 +211,155 @@ function requireAdmin(req, res, next) {
 }
 
 // ============================================================
-// ADMIN VERIFY
+// HEALTH
 // ============================================================
 
-app.post(
-    "/api/admin/verify",
-    (req, res) => {
+app.get("/health", (req, res) => {
 
-        const password =
-            req.body?.password || "";
-
-        if (
-            typeof password !== "string" ||
-            password !== ADMIN_PASSWORD
-        ) {
-
-            return res.status(401).json({
-                ok: false
-            });
-        }
-
-        return res.json({
-            ok: true
-        });
-    }
-);
-
-// ============================================================
-// HEALTH CHECK
-// ============================================================
-
-app.get(
-    "/health",
-    (req, res) => {
-
-        res.status(200).json({
-            status: "ok",
-            service: "AI Assistant Gold Journal",
-            timestamp: new Date().toISOString()
-        });
-    }
-);
+    res.status(200).json({
+        status: "ok",
+        service: "AI Assistant Gold Journal",
+        timestamp: new Date().toISOString()
+    });
+});
 
 // ============================================================
 // API STATUS
 // ============================================================
 
-app.get(
-    "/api/status",
-    (req, res) => {
+app.get("/api/status", (req, res) => {
 
-        res.status(200).json({
-            success: true,
-            message:
-                "AI Assistant Gold Journal server is running",
-            service:
-                "ai-assistant-gold-journal",
-            version: "1.0.0",
-            node: process.version,
-            environment:
-                process.env.NODE_ENV || "production",
-            timestamp:
-                new Date().toISOString()
+    res.status(200).json({
+
+        success: true,
+
+        message:
+            "AI Assistant Gold Journal server is running",
+
+        service:
+            "ai-assistant-gold-journal",
+
+        version:
+            "2.0.0",
+
+        node:
+            process.version,
+
+        environment:
+            process.env.NODE_ENV || "production",
+
+        timestamp:
+            new Date().toISOString()
+    });
+});
+
+// ============================================================
+// ADMIN VERIFY
+// ============================================================
+
+app.post("/api/admin/verify", (req, res) => {
+
+    const password =
+        String(req.body.password || "");
+
+    if (password === ADMIN_PASSWORD) {
+
+        return res.json({
+            ok: true
         });
     }
-);
+
+    return res.status(401).json({
+        ok: false
+    });
+});
 
 // ============================================================
 // GET DAY
 // ============================================================
 
-app.get(
-    "/api/day/:date",
-    (req, res) => {
+app.get("/api/day/:date", (req, res) => {
 
-        const date = req.params.date;
+    const date = req.params.date;
 
-        if (!isValidDate(date)) {
+    const data = loadDatabase();
 
-            return res.status(400).json({
-                success: false,
-                error: "Format tanggal harus YYYY-MM-DD"
-            });
-        }
+    const day = data.days[date];
 
-        const day =
-            database.days[date] || {
-                signals: [],
-                screenshot: null
-            };
+    if (!day) {
 
         return res.json({
             date,
-            signals: day.signals || [],
-            screenshot: day.screenshot || null
+            signals: [],
+            screenshot: null
         });
     }
-);
+
+    res.json({
+        date,
+        signals: day.signals || [],
+        screenshot: day.screenshot || null
+    });
+});
 
 // ============================================================
 // GET LATEST DATE
 // ============================================================
 
-app.get(
-    "/api/latest",
-    (req, res) => {
+app.get("/api/latest", (req, res) => {
 
-        const dates =
-            Object.keys(database.days)
-                .filter(isValidDate)
-                .sort();
+    const data = loadDatabase();
 
-        if (!dates.length) {
+    const dates =
+        Object.keys(data.days)
+            .filter(date => {
 
-            return res.status(404).json({
-                success: false,
-                error: "Belum ada data"
-            });
-        }
+                const day =
+                    data.days[date];
+
+                return (
+                    (day.signals &&
+                        day.signals.length > 0) ||
+                    day.screenshot
+                );
+            })
+            .sort();
+
+    if (!dates.length) {
 
         return res.json({
-            date: dates[dates.length - 1]
+            date: null
         });
     }
-);
+
+    res.json({
+        date: dates[dates.length - 1]
+    });
+});
 
 // ============================================================
 // GET MONTH
 // ============================================================
 
-app.get(
-    "/api/month/:month",
-    (req, res) => {
+app.get("/api/month/:month", (req, res) => {
 
-        const month = req.params.month;
+    const month = req.params.month;
 
-        if (!isValidMonth(month)) {
+    const data = loadDatabase();
 
-            return res.status(400).json({
-                success: false,
-                error: "Format bulan harus YYYY-MM"
-            });
-        }
+    const result = {};
 
-        const result = {};
+    Object.keys(data.days)
+        .filter(date =>
+            date.startsWith(month)
+        )
+        .forEach(date => {
 
-        Object.keys(database.days).forEach(
-            (date) => {
+            result[date] = data.days[date];
+        });
 
-                if (date.startsWith(month + "-")) {
-
-                    result[date] = {
-                        signals:
-                            database.days[date].signals ||
-                            [],
-                        screenshot:
-                            database.days[date].screenshot ||
-                            null
-                    };
-                }
-            }
-        );
-
-        return res.json(result);
-    }
-);
+    res.json(result);
+});
 
 // ============================================================
 // ADD SIGNAL
@@ -406,152 +372,127 @@ app.post(
 
         const date = req.params.date;
 
-        if (!isValidDate(date)) {
-
-            return res.status(400).json({
-                success: false,
-                error:
-                    "Format tanggal harus YYYY-MM-DD"
-            });
-        }
-
         const {
             time,
             direction,
             entryPrice,
+            tp1Price,
+            tp2Price,
+            slPrice,
             result,
             pnl
-        } = req.body || {};
-
-        // ----------------------------------------------------
-        // VALIDATION
-        // ----------------------------------------------------
+        } = req.body;
 
         if (!time) {
 
             return res.status(400).json({
                 success: false,
-                error: "Jam signal wajib diisi"
+                error: "Jam signal wajib diisi."
             });
         }
 
+        if (!result) {
+
+            return res.status(400).json({
+                success: false,
+                error: "Hasil signal wajib diisi."
+            });
+        }
+
+        const allowedDirections = [
+            "BUY",
+            "SELL"
+        ];
+
+        const allowedResults = [
+            "TP1",
+            "TP2",
+            "SL",
+            "PENDING",
+            "NO SIGNAL"
+        ];
+
         if (
-            direction !== "BUY" &&
-            direction !== "SELL"
+            direction &&
+            !allowedDirections.includes(direction)
         ) {
 
             return res.status(400).json({
                 success: false,
-                error: "Direction harus BUY atau SELL"
-            });
-        }
-
-        if (!entryPrice) {
-
-            return res.status(400).json({
-                success: false,
-                error: "Harga entry wajib diisi"
+                error: "Arah signal tidak valid."
             });
         }
 
         if (
-            result !== "TP1" &&
-            result !== "TP2" &&
-            result !== "SL"
+            !allowedResults.includes(result)
         ) {
 
             return res.status(400).json({
                 success: false,
-                error:
-                    "Hasil harus TP1, TP2, atau SL"
+                error: "Hasil signal tidak valid."
             });
         }
 
-        if (
-            pnl === undefined ||
-            pnl === null ||
-            pnl === ""
-        ) {
+        const data = loadDatabase();
 
-            return res.status(400).json({
-                success: false,
-                error: "PnL wajib diisi"
-            });
-        }
-
-        const pnlNumber =
-            Number.parseFloat(pnl);
-
-        if (Number.isNaN(pnlNumber)) {
-
-            return res.status(400).json({
-                success: false,
-                error: "PnL harus berupa angka"
-            });
-        }
-
-        // ----------------------------------------------------
-        // CREATE DAY
-        // ----------------------------------------------------
-
-        const day = ensureDay(date);
-
-        // ----------------------------------------------------
-        // CREATE ID
-        // ----------------------------------------------------
-
-        const id =
-            Date.now().toString() +
-            "_" +
-            Math.random()
-                .toString(36)
-                .substring(2, 8);
-
-        // ----------------------------------------------------
-        // SIGNAL OBJECT
-        // ----------------------------------------------------
+        const day =
+            ensureDay(data, date);
 
         const signal = {
 
-            id,
+            id: generateId(),
 
             time:
                 String(time).trim(),
 
-            direction,
+            direction:
+                direction === "SELL"
+                    ? "SELL"
+                    : "BUY",
 
             entryPrice:
-                String(entryPrice).trim(),
+                entryPrice
+                    ? String(entryPrice).trim()
+                    : "",
 
-            result,
+            tp1Price:
+                tp1Price
+                    ? String(tp1Price).trim()
+                    : "",
+
+            tp2Price:
+                tp2Price
+                    ? String(tp2Price).trim()
+                    : "",
+
+            slPrice:
+                slPrice
+                    ? String(slPrice).trim()
+                    : "",
+
+            result:
+                String(result).trim(),
 
             pnl:
-                pnlNumber,
+                pnl === "" ||
+                pnl === undefined ||
+                pnl === null
+                    ? 0
+                    : Number(pnl),
 
             createdAt:
                 new Date().toISOString()
         };
 
-        day.signals.push(signal);
-
-        // ----------------------------------------------------
-        // SAVE
-        // ----------------------------------------------------
-
-        if (!saveDatabase()) {
-
-            return res.status(500).json({
-                success: false,
-                error:
-                    "Signal gagal disimpan"
-            });
+        if (Number.isNaN(signal.pnl)) {
+            signal.pnl = 0;
         }
 
-        console.log(
-            `📊 Signal ditambahkan: ${date} ${time} ${direction} ${result} $${pnlNumber}`
-        );
+        day.signals.push(signal);
 
-        return res.status(201).json({
+        saveDatabase(data);
+
+        res.json({
             success: true,
             signal
         });
@@ -567,68 +508,50 @@ app.delete(
     requireAdmin,
     (req, res) => {
 
-        const date = req.params.date;
-        const id = req.params.id;
+        const date =
+            req.params.date;
 
-        if (!isValidDate(date)) {
+        const id =
+            req.params.id;
 
-            return res.status(400).json({
-                success: false,
-                error:
-                    "Format tanggal harus YYYY-MM-DD"
-            });
-        }
+        const data =
+            loadDatabase();
 
         const day =
-            database.days[date];
+            data.days[date];
 
         if (!day) {
 
             return res.status(404).json({
                 success: false,
-                error:
-                    "Tanggal tidak ditemukan"
+                error: "Tanggal tidak ditemukan."
             });
         }
 
-        const signals =
-            day.signals || [];
+        const before =
+            day.signals.length;
 
-        const index =
-            signals.findIndex(
-                (signal) =>
-                    String(signal.id) ===
+        day.signals =
+            day.signals.filter(
+                signal =>
+                    String(signal.id) !==
                     String(id)
             );
 
-        if (index === -1) {
+        if (
+            day.signals.length === before
+        ) {
 
             return res.status(404).json({
                 success: false,
-                error:
-                    "Signal tidak ditemukan"
+                error: "Signal tidak ditemukan."
             });
         }
 
-        const deleted =
-            signals.splice(index, 1)[0];
+        saveDatabase(data);
 
-        if (!saveDatabase()) {
-
-            return res.status(500).json({
-                success: false,
-                error:
-                    "Signal gagal dihapus"
-            });
-        }
-
-        console.log(
-            `🗑️ Signal dihapus: ${date} ${id}`
-        );
-
-        return res.json({
-            success: true,
-            deleted
+        res.json({
+            success: true
         });
     }
 );
@@ -642,438 +565,232 @@ app.post(
     requireAdmin,
     (req, res) => {
 
-        const date = req.params.date;
+        const date =
+            req.params.date;
 
-        if (!isValidDate(date)) {
+        const screenshot =
+            req.body.screenshot;
+
+        if (!screenshot) {
 
             return res.status(400).json({
                 success: false,
-                error:
-                    "Format tanggal harus YYYY-MM-DD"
+                error: "Screenshot belum dipilih."
             });
         }
-
-        const screenshot =
-            req.body?.screenshot;
 
         if (
             typeof screenshot !== "string" ||
-            !screenshot
+            !screenshot.startsWith("data:image/")
         ) {
 
             return res.status(400).json({
                 success: false,
-                error:
-                    "Screenshot tidak ditemukan"
+                error: "Format screenshot tidak valid."
             });
         }
 
-        // ----------------------------------------------------
-        // LIMIT DATA
-        // ----------------------------------------------------
-
-        if (screenshot.length > 15 * 1024 * 1024) {
-
-            return res.status(413).json({
-                success: false,
-                error:
-                    "Ukuran screenshot terlalu besar"
-            });
-        }
-
-        // ----------------------------------------------------
-        // VALIDATE IMAGE DATA
-        // ----------------------------------------------------
-
-        if (
-            !screenshot.startsWith(
-                "data:image/"
-            )
-        ) {
-
-            return res.status(400).json({
-                success: false,
-                error:
-                    "File harus berupa gambar"
-            });
-        }
+        const data =
+            loadDatabase();
 
         const day =
-            ensureDay(date);
+            ensureDay(data, date);
 
         day.screenshot =
             screenshot;
 
-        if (!saveDatabase()) {
+        saveDatabase(data);
 
-            return res.status(500).json({
-                success: false,
-                error:
-                    "Screenshot gagal disimpan"
-            });
-        }
-
-        console.log(
-            `🖼️ Screenshot disimpan: ${date}`
-        );
-
-        return res.json({
-            success: true,
-            message:
-                "Screenshot tersimpan"
-        });
-    }
-);
-
-// ============================================================
-// DELETE SCREENSHOT
-// ============================================================
-
-app.delete(
-    "/api/day/:date/screenshot",
-    requireAdmin,
-    (req, res) => {
-
-        const date = req.params.date;
-
-        if (!isValidDate(date)) {
-
-            return res.status(400).json({
-                success: false,
-                error:
-                    "Format tanggal harus YYYY-MM-DD"
-            });
-        }
-
-        const day =
-            database.days[date];
-
-        if (!day) {
-
-            return res.status(404).json({
-                success: false,
-                error:
-                    "Tanggal tidak ditemukan"
-            });
-        }
-
-        day.screenshot = null;
-
-        if (!saveDatabase()) {
-
-            return res.status(500).json({
-                success: false,
-                error:
-                    "Screenshot gagal dihapus"
-            });
-        }
-
-        return res.json({
+        res.json({
             success: true
         });
     }
 );
 
 // ============================================================
-// HOME PAGE
+// HOME
 // ============================================================
 
-app.get(
-    "/",
-    (req, res) => {
+app.get("/", (req, res) => {
 
-        const indexPath =
-            path.join(
-                ROOT_DIR,
-                "index.html"
-            );
+    const indexPath =
+        path.join(
+            ROOT_DIR,
+            "index.html"
+        );
 
-        res.sendFile(
-            indexPath,
-            (error) => {
+    res.sendFile(
+        indexPath,
+        error => {
 
-                if (error) {
+            if (error) {
 
-                    console.error(
-                        "❌ Gagal mengirim index.html:"
+                console.error(
+                    "❌ Gagal mengirim index.html:"
+                );
+
+                console.error(error);
+
+                if (!res.headersSent) {
+
+                    res.status(500).send(
+                        "index.html tidak ditemukan."
                     );
-
-                    console.error(error);
-
-                    if (!res.headersSent) {
-
-                        res.status(500).send(`
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <meta charset="UTF-8">
-                                <title>Server Error</title>
-                            </head>
-                            <body>
-                                <h1>500 - Server Error</h1>
-                                <p>index.html tidak ditemukan.</p>
-                            </body>
-                            </html>
-                        `);
-                    }
                 }
             }
-        );
-    }
-);
+        }
+    );
+});
 
 // ============================================================
 // SPA FALLBACK
 // ============================================================
 
-app.get(
-    "*",
-    (req, res, next) => {
+app.get("*", (req, res, next) => {
 
-        // Jangan fallback API
-        if (
-            req.path.startsWith("/api/")
-        ) {
-            return next();
-        }
+    if (
+        req.path.startsWith("/api/")
+    ) {
+        return next();
+    }
 
-        // Jangan fallback file
-        if (path.extname(req.path)) {
-            return next();
-        }
+    if (
+        path.extname(req.path)
+    ) {
+        return next();
+    }
 
-        const indexPath =
-            path.join(
-                ROOT_DIR,
-                "index.html"
-            );
-
-        res.sendFile(
-            indexPath,
-            (error) => {
-
-                if (error) {
-                    next(error);
-                }
-            }
+    const indexPath =
+        path.join(
+            ROOT_DIR,
+            "index.html"
         );
-    }
-);
 
-// ============================================================
-// 404 HANDLER
-// ============================================================
+    res.sendFile(
+        indexPath,
+        error => {
 
-app.use(
-    (req, res) => {
-
-        if (
-            req.path.startsWith("/api/")
-        ) {
-
-            return res.status(404).json({
-                success: false,
-                error:
-                    "API endpoint tidak ditemukan",
-                path: req.path
-            });
+            if (error) {
+                next(error);
+            }
         }
+    );
+});
 
-        res.status(404).send(`
-            <!DOCTYPE html>
+// ============================================================
+// 404
+// ============================================================
 
-            <html lang="id">
+app.use((req, res) => {
 
-            <head>
+    if (
+        req.path.startsWith("/api/")
+    ) {
 
-                <meta charset="UTF-8">
-
-                <meta
-                    name="viewport"
-                    content="width=device-width, initial-scale=1.0"
-                >
-
-                <title>404 - Tidak Ditemukan</title>
-
-                <style>
-
-                    * {
-                        box-sizing: border-box;
-                    }
-
-                    body {
-                        margin: 0;
-                        min-height: 100vh;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-
-                        background: #0b0f14;
-                        color: #ffffff;
-
-                        font-family:
-                            Arial,
-                            Helvetica,
-                            sans-serif;
-                    }
-
-                    .container {
-                        text-align: center;
-                        padding: 40px;
-                    }
-
-                    .code {
-                        font-size: 80px;
-                        font-weight: 800;
-                        margin-bottom: 10px;
-                    }
-
-                    h1 {
-                        margin: 0 0 12px;
-                        font-size: 28px;
-                    }
-
-                    p {
-                        color: #9ca3af;
-                        margin-bottom: 30px;
-                    }
-
-                    a {
-                        display: inline-block;
-                        padding: 12px 22px;
-
-                        background: #ffffff;
-                        color: #000000;
-
-                        text-decoration: none;
-                        border-radius: 8px;
-
-                        font-weight: 600;
-                    }
-
-                    a:hover {
-                        opacity: 0.85;
-                    }
-
-                </style>
-
-            </head>
-
-            <body>
-
-                <div class="container">
-
-                    <div class="code">
-                        404
-                    </div>
-
-                    <h1>
-                        Halaman Tidak Ditemukan
-                    </h1>
-
-                    <p>
-                        Halaman yang kamu cari tidak tersedia.
-                    </p>
-
-                    <a href="/">
-                        Kembali ke Dashboard
-                    </a>
-
-                </div>
-
-            </body>
-
-            </html>
-        `);
+        return res.status(404).json({
+            success: false,
+            error: "API endpoint tidak ditemukan",
+            path: req.path
+        });
     }
-);
+
+    res.status(404).send(`
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+<title>404</title>
+</head>
+
+<body style="
+background:#0b0f14;
+color:white;
+font-family:Arial;
+text-align:center;
+padding:80px 20px;
+">
+
+<h1>404</h1>
+
+<p>Halaman tidak ditemukan.</p>
+
+<a href="/" style="
+color:white;
+">
+Kembali ke Dashboard
+</a>
+
+</body>
+</html>
+`);
+});
 
 // ============================================================
 // ERROR HANDLER
 // ============================================================
 
-app.use(
-    (err, req, res, next) => {
+app.use((err, req, res, next) => {
 
-        console.error(
-            "=============================================="
-        );
+    console.error(
+        "=============================================="
+    );
 
-        console.error(
-            "❌ EXPRESS SERVER ERROR"
-        );
+    console.error(
+        "❌ EXPRESS SERVER ERROR"
+    );
 
-        console.error(
-            "=============================================="
-        );
+    console.error(
+        "=============================================="
+    );
 
-        console.error(err);
+    console.error(err);
 
-        if (res.headersSent) {
-            return next(err);
-        }
-
-        if (
-            req.path.startsWith("/api/")
-        ) {
-
-            return res.status(500).json({
-                success: false,
-                error:
-                    "Internal Server Error"
-            });
-        }
-
-        res.status(500).send(`
-            <!DOCTYPE html>
-
-            <html lang="id">
-
-            <head>
-
-                <meta charset="UTF-8">
-
-                <meta
-                    name="viewport"
-                    content="width=device-width, initial-scale=1.0"
-                >
-
-                <title>500 - Server Error</title>
-
-            </head>
-
-            <body
-                style="
-                    background:#0b0f14;
-                    color:white;
-                    font-family:Arial,sans-serif;
-                    text-align:center;
-                    padding:60px 20px;
-                "
-            >
-
-                <h1>500</h1>
-
-                <p>
-                    Terjadi kesalahan pada server.
-                </p>
-
-                <a
-                    href="/"
-                    style="
-                        color:white;
-                        text-decoration:none;
-                    "
-                >
-                    Kembali ke halaman utama
-                </a>
-
-            </body>
-
-            </html>
-        `);
+    if (res.headersSent) {
+        return next(err);
     }
-);
+
+    if (
+        req.path.startsWith("/api/")
+    ) {
+
+        return res.status(500).json({
+            success: false,
+            error: "Internal Server Error"
+        });
+    }
+
+    res.status(500).send(`
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>500</title>
+</head>
+
+<body style="
+background:#0b0f14;
+color:white;
+font-family:Arial;
+text-align:center;
+padding:60px 20px;
+">
+
+<h1>500</h1>
+
+<p>
+Terjadi kesalahan pada server.
+</p>
+
+<a href="/" style="color:white;">
+Kembali
+</a>
+
+</body>
+</html>
+`);
+});
 
 // ============================================================
 // START SERVER
@@ -1086,7 +803,6 @@ const server =
         () => {
 
             console.log("");
-
             console.log(
                 "=============================================="
             );
@@ -1100,31 +816,27 @@ const server =
             );
 
             console.log(
-                `🌐 Server     : 0.0.0.0:${PORT}`
+                `🌐 Server : 0.0.0.0:${PORT}`
             );
 
             console.log(
-                `📁 Root       : ${ROOT_DIR}`
+                `📁 Root   : ${ROOT_DIR}`
             );
 
             console.log(
-                `📄 Index      : ${path.join(ROOT_DIR, "index.html")}`
+                `💾 Data   : ${DATA_FILE}`
             );
 
             console.log(
-                `💾 Data       : ${DATA_FILE}`
+                `🟢 Health : /health`
             );
 
             console.log(
-                "🔐 Admin API  : /api/admin/verify"
+                `🔵 API    : /api/status`
             );
 
             console.log(
-                "🟢 Health     : /health"
-            );
-
-            console.log(
-                "🔵 API Status : /api/status"
+                "🔐 Admin  : ENABLED"
             );
 
             console.log(
@@ -1147,37 +859,20 @@ const server =
 // SERVER ERROR
 // ============================================================
 
-server.on(
-    "error",
-    (error) => {
+server.on("error", error => {
 
-        console.error("");
+    console.error(
+        "❌ SERVER ERROR"
+    );
 
-        console.error(
-            "=============================================="
-        );
-
-        console.error(
-            "❌ SERVER ERROR"
-        );
-
-        console.error(
-            "=============================================="
-        );
-
-        console.error(error);
-
-        console.error("");
-    }
-);
+    console.error(error);
+});
 
 // ============================================================
 // GRACEFUL SHUTDOWN
 // ============================================================
 
 function shutdown(signal) {
-
-    console.log("");
 
     console.log(
         `⚠️ ${signal} diterima.`
@@ -1187,52 +882,36 @@ function shutdown(signal) {
         "🛑 Menghentikan server..."
     );
 
-    server.close(
-        () => {
+    server.close(() => {
 
-            console.log(
-                "✅ Server berhasil dihentikan."
-            );
+        console.log(
+            "✅ Server berhasil dihentikan."
+        );
 
-            process.exit(0);
-        }
-    );
+        process.exit(0);
+    });
 }
 
 process.on(
     "SIGTERM",
-    () => {
-        shutdown("SIGTERM");
-    }
+    () => shutdown("SIGTERM")
 );
 
 process.on(
     "SIGINT",
-    () => {
-        shutdown("SIGINT");
-    }
+    () => shutdown("SIGINT")
 );
 
 // ============================================================
-// UNHANDLED ERRORS
+// UNCAUGHT ERRORS
 // ============================================================
 
 process.on(
     "uncaughtException",
-    (error) => {
-
-        console.error("");
-
-        console.error(
-            "=============================================="
-        );
+    error => {
 
         console.error(
             "❌ UNCAUGHT EXCEPTION"
-        );
-
-        console.error(
-            "=============================================="
         );
 
         console.error(error);
@@ -1241,20 +920,10 @@ process.on(
 
 process.on(
     "unhandledRejection",
-    (reason) => {
-
-        console.error("");
-
-        console.error(
-            "=============================================="
-        );
+    reason => {
 
         console.error(
             "❌ UNHANDLED PROMISE REJECTION"
-        );
-
-        console.error(
-            "=============================================="
         );
 
         console.error(reason);
