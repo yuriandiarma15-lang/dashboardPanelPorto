@@ -2,7 +2,7 @@
 // AI ASSISTANT GOLD JOURNAL
 // server.js
 // GOOGLE SHEETS + IMGBB VERSION
-// DATE SEPARATOR VERSION
+// NO DATE SEPARATOR VERSION
 // ============================================================
 
 const express = require("express");
@@ -168,13 +168,6 @@ const HEADERS = [
 ];
 
 // ============================================================
-// DATE SEPARATOR CONSTANT
-// ============================================================
-
-const DATE_SEPARATOR_ID =
-    "DATE_SEPARATOR";
-
-// ============================================================
 // ID GENERATOR
 // ============================================================
 
@@ -271,7 +264,7 @@ async function ensureSheetHeader() {
                 GOOGLE_SHEET_ID,
 
             range:
-                "JOURNAL!L1",
+                `${SHEET_NAME}!L1`,
 
             valueInputOption:
                 "RAW",
@@ -318,401 +311,6 @@ async function ensureSheetHeader() {
 }
 
 // ============================================================
-// CHECK DATE SEPARATOR
-// ============================================================
-
-async function dateSeparatorExists(date) {
-
-    if (!sheets) {
-
-        throw new Error(
-            "Google Sheets belum terhubung."
-        );
-    }
-
-    const response =
-        await sheets.spreadsheets.values.get({
-
-            spreadsheetId:
-                GOOGLE_SHEET_ID,
-
-            range:
-                `${SHEET_NAME}!A2:B`
-        });
-
-    const rows =
-        response.data.values || [];
-
-    for (
-        let i = 0;
-        i < rows.length;
-        i++
-    ) {
-
-        const id =
-            String(
-                rows[i][0] || ""
-            ).trim();
-
-        const rowDate =
-            String(
-                rows[i][1] || ""
-            ).trim();
-
-        if (
-            id === DATE_SEPARATOR_ID &&
-            rowDate === String(date).trim()
-        ) {
-
-            return true;
-        }
-    }
-
-    return false;
-}
-
-// ============================================================
-// CREATE DATE SEPARATOR
-// ============================================================
-
-async function ensureDateSeparator(date) {
-
-    if (!sheets) {
-
-        throw new Error(
-            "Google Sheets belum terhubung."
-        );
-    }
-
-    const cleanDate =
-        String(date || "").trim();
-
-    if (!cleanDate) {
-
-        throw new Error(
-            "Tanggal tidak boleh kosong."
-        );
-    }
-
-    // --------------------------------------------------------
-    // CEK APAKAH SUDAH ADA
-    // --------------------------------------------------------
-
-    const exists =
-        await dateSeparatorExists(
-            cleanDate
-        );
-
-    if (exists) {
-
-        return false;
-    }
-
-    // --------------------------------------------------------
-    // BUAT BARIS SEPARATOR
-    // --------------------------------------------------------
-
-    await sheets.spreadsheets.values.append({
-
-        spreadsheetId:
-            GOOGLE_SHEET_ID,
-
-        range:
-            `${SHEET_NAME}!A:L`,
-
-        valueInputOption:
-            "RAW",
-
-        insertDataOption:
-            "INSERT_ROWS",
-
-        requestBody: {
-
-            values: [[
-
-                DATE_SEPARATOR_ID,
-
-                cleanDate,
-
-                "",
-
-                "",
-
-                "",
-
-                "",
-
-                "",
-
-                "",
-
-                "",
-
-                "",
-
-                "",
-
-                ""
-            ]]
-        }
-    });
-
-    console.log(
-        `📅 DATE SEPARATOR DIBUAT: ${cleanDate}`
-    );
-
-    return true;
-}
-
-// ============================================================
-// FORMAT DATE SEPARATOR
-// ============================================================
-
-async function formatDateSeparator(date) {
-
-    try {
-
-        const metadata =
-            await sheets.spreadsheets.get({
-
-                spreadsheetId:
-                    GOOGLE_SHEET_ID,
-
-                fields:
-                    "sheets.properties"
-            });
-
-        const journalSheet =
-            metadata.data.sheets.find(
-                sheet =>
-                    sheet.properties.title ===
-                    SHEET_NAME
-            );
-
-        if (!journalSheet) {
-
-            return;
-        }
-
-        const sheetId =
-            journalSheet.properties.sheetId;
-
-        const response =
-            await sheets.spreadsheets.values.get({
-
-                spreadsheetId:
-                    GOOGLE_SHEET_ID,
-
-                range:
-                    `${SHEET_NAME}!A:A`
-            });
-
-        const rows =
-            response.data.values || [];
-
-        let rowNumber = null;
-
-        for (
-            let i = 0;
-            i < rows.length;
-            i++
-        ) {
-
-            if (
-                String(
-                    rows[i][0] || ""
-                ).trim() ===
-                DATE_SEPARATOR_ID
-            ) {
-
-                const dateResponse =
-                    await sheets.spreadsheets.values.get({
-
-                        spreadsheetId:
-                            GOOGLE_SHEET_ID,
-
-                        range:
-                            `${SHEET_NAME}!B${i + 1}`
-                    });
-
-                const rowDate =
-                    String(
-                        dateResponse.data.values?.[0]?.[0] || ""
-                    ).trim();
-
-                if (
-                    rowDate ===
-                    String(date).trim()
-                ) {
-
-                    rowNumber =
-                        i + 1;
-
-                    break;
-                }
-            }
-        }
-
-        if (!rowNumber) {
-
-            return;
-        }
-
-        // ----------------------------------------------------
-        // FORMAT BARIS
-        // ----------------------------------------------------
-
-        await sheets.spreadsheets.batchUpdate({
-
-            spreadsheetId:
-                GOOGLE_SHEET_ID,
-
-            requestBody: {
-
-                requests: [
-
-                    {
-                        mergeCells: {
-
-                            range: {
-
-                                sheetId,
-
-                                startRowIndex:
-                                    rowNumber - 1,
-
-                                endRowIndex:
-                                    rowNumber,
-
-                                startColumnIndex:
-                                    0,
-
-                                endColumnIndex:
-                                    12
-                            },
-
-                            mergeType:
-                                "MERGE_ALL"
-                        }
-                    },
-
-                    {
-                        repeatCell: {
-
-                            range: {
-
-                                sheetId,
-
-                                startRowIndex:
-                                    rowNumber - 1,
-
-                                endRowIndex:
-                                    rowNumber,
-
-                                startColumnIndex:
-                                    0,
-
-                                endColumnIndex:
-                                    12
-                            },
-
-                            cell: {
-
-                                userEnteredFormat: {
-
-                                    horizontalAlignment:
-                                        "CENTER",
-
-                                    verticalAlignment:
-                                        "MIDDLE",
-
-                                    textFormat: {
-
-                                        bold:
-                                            true,
-
-                                        fontSize:
-                                            12
-                                    }
-                                }
-                            },
-
-                            fields:
-                                "userEnteredFormat(horizontalAlignment,verticalAlignment,textFormat)"
-                        }
-                    },
-
-                    {
-                        updateDimensionProperties: {
-
-                            range: {
-
-                                sheetId,
-
-                                dimension:
-                                    "ROWS",
-
-                                startIndex:
-                                    rowNumber - 1,
-
-                                endIndex:
-                                    rowNumber
-                            },
-
-                            properties: {
-
-                                pixelSize:
-                                    32
-                            },
-
-                            fields:
-                                "pixelSize"
-                        }
-                    }
-                ]
-            }
-        });
-
-        // ----------------------------------------------------
-        // UBAH ISI MENJADI TAMPILAN TANGGAL
-        // ----------------------------------------------------
-
-        await sheets.spreadsheets.values.update({
-
-            spreadsheetId:
-                GOOGLE_SHEET_ID,
-
-            range:
-                `${SHEET_NAME}!A${rowNumber}`,
-
-            valueInputOption:
-                "RAW",
-
-            requestBody: {
-
-                values: [[
-                    `===== ${date} =====`
-                ]]
-            }
-        });
-
-        console.log(
-            `🎨 DATE SEPARATOR DIFORMAT: ${date}`
-        );
-
-    } catch (error) {
-
-        console.error(
-            "⚠️ Gagal memformat date separator:"
-        );
-
-        console.error(
-            error.message
-        );
-    }
-}
-
-// ============================================================
 // GET ALL SIGNALS
 // ============================================================
 
@@ -744,14 +342,15 @@ async function getAllSignals() {
 
         .filter(row => {
 
-            const id =
-                String(
-                    row[0] || ""
-                ).trim();
+            /*
+             * Abaikan baris kosong.
+             *
+             * Tidak ada lagi DATE_SEPARATOR.
+             */
 
-            return (
-                id !==
-                DATE_SEPARATOR_ID
+            return row.some(
+                value =>
+                    String(value || "").trim() !== ""
             );
         })
 
@@ -787,7 +386,7 @@ async function getAllSignals() {
                     row[2] || "",
 
                 direction:
-                    row[3] || "BUY",
+                    row[3] || "",
 
                 entryPrice:
                     row[4] || "",
@@ -892,11 +491,11 @@ async function findSignalRow(id) {
         const rowId =
             String(
                 rows[i][0] || ""
-            );
+            ).trim();
 
         if (
             rowId ===
-            String(id)
+            String(id).trim()
         ) {
 
             return i + 2;
@@ -941,15 +540,15 @@ async function findScreenshotRow(date) {
         const rowDate =
             String(
                 rows[i][0] || ""
-            );
+            ).trim();
 
         const screenshotUrl =
             String(
                 rows[i][10] || ""
-            );
+            ).trim();
 
         if (
-            rowDate === String(date) &&
+            rowDate === String(date).trim() &&
             screenshotUrl
         ) {
 
@@ -1112,7 +711,7 @@ app.get(
                 Boolean(IMGBB_API_KEY),
 
             dateSeparator:
-                true,
+                false,
 
             timestamp:
                 new Date().toISOString()
@@ -1139,7 +738,7 @@ app.get(
                 "ai-assistant-gold-journal",
 
             version:
-                "4.1.0",
+                "4.2.0",
 
             database:
                 "Google Sheets",
@@ -1151,7 +750,7 @@ app.get(
                 SHEET_NAME,
 
             dateSeparator:
-                true,
+                false,
 
             node:
                 process.version,
@@ -1401,7 +1000,9 @@ app.post(
         try {
 
             const date =
-                req.params.date;
+                String(
+                    req.params.date || ""
+                ).trim();
 
             const {
 
@@ -1426,6 +1027,17 @@ app.post(
             // ------------------------------------------------
             // VALIDATION
             // ------------------------------------------------
+
+            if (!date) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Tanggal wajib diisi."
+                });
+            }
 
             if (!time) {
 
@@ -1501,26 +1113,20 @@ app.post(
             }
 
             // ------------------------------------------------
-            // PASTIKAN DATE SEPARATOR ADA
+            // HARGA
+            // ------------------------------------------------
+            //
+            // Jika harga tidak dikirim,
+            // maka tetap kosong.
+            //
+            // Khusus NO SIGNAL:
+            // harga dibuat kosong agar tidak muncul
+            // harga entry / TP / SL yang tidak ada.
             // ------------------------------------------------
 
-            const separatorCreated =
-                await ensureDateSeparator(
-                    date
-                );
-
-            if (
-                separatorCreated
-            ) {
-
-                await formatDateSeparator(
-                    date
-                );
-            }
-
-            // ------------------------------------------------
-            // CREATE SIGNAL
-            // ------------------------------------------------
+            const isNoSignal =
+                String(result).trim() ===
+                "NO SIGNAL";
 
             const signal = {
 
@@ -1528,9 +1134,7 @@ app.post(
                     generateId(),
 
                 date:
-                    String(
-                        date
-                    ).trim(),
+                    date,
 
                 time:
                     String(
@@ -1538,37 +1142,61 @@ app.post(
                     ).trim(),
 
                 direction:
-                    direction === "SELL"
-                        ? "SELL"
-                        : "BUY",
+                    isNoSignal
+                        ? ""
+                        : (
+                            direction === "SELL"
+                                ? "SELL"
+                                : "BUY"
+                        ),
 
                 entryPrice:
-                    entryPrice
-                        ? String(
-                            entryPrice
-                        ).trim()
-                        : "",
+                    isNoSignal
+                        ? ""
+                        : (
+                            entryPrice !== undefined &&
+                            entryPrice !== null
+                                ? String(
+                                    entryPrice
+                                ).trim()
+                                : ""
+                        ),
 
                 tp1Price:
-                    tp1Price
-                        ? String(
-                            tp1Price
-                        ).trim()
-                        : "",
+                    isNoSignal
+                        ? ""
+                        : (
+                            tp1Price !== undefined &&
+                            tp1Price !== null
+                                ? String(
+                                    tp1Price
+                                ).trim()
+                                : ""
+                        ),
 
                 tp2Price:
-                    tp2Price
-                        ? String(
-                            tp2Price
-                        ).trim()
-                        : "",
+                    isNoSignal
+                        ? ""
+                        : (
+                            tp2Price !== undefined &&
+                            tp2Price !== null
+                                ? String(
+                                    tp2Price
+                                ).trim()
+                                : ""
+                        ),
 
                 slPrice:
-                    slPrice
-                        ? String(
-                            slPrice
-                        ).trim()
-                        : "",
+                    isNoSignal
+                        ? ""
+                        : (
+                            slPrice !== undefined &&
+                            slPrice !== null
+                                ? String(
+                                    slPrice
+                                ).trim()
+                                : ""
+                        ),
 
                 result:
                     String(
@@ -1649,7 +1277,7 @@ app.post(
             });
 
             console.log(
-                `✅ SIGNAL TERSIMPAN: ${signal.date} ${signal.time}`
+                `✅ SIGNAL TERSIMPAN: ${signal.date} ${signal.time} ${signal.result}`
             );
 
             return res.json({
@@ -1691,23 +1319,6 @@ app.delete(
 
             const id =
                 req.params.id;
-
-            // ------------------------------------------------
-            // JANGAN IZINKAN HAPUS DATE SEPARATOR
-            // ------------------------------------------------
-
-            if (
-                id === DATE_SEPARATOR_ID
-            ) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    error:
-                        "Date separator tidak boleh dihapus melalui endpoint signal."
-                });
-            }
 
             const rowNumber =
                 await findSignalRow(
@@ -1968,7 +1579,9 @@ app.post(
         try {
 
             const date =
-                req.params.date;
+                String(
+                    req.params.date || ""
+                ).trim();
 
             const screenshot =
                 req.body.screenshot;
@@ -1976,6 +1589,17 @@ app.post(
             // ------------------------------------------------
             // VALIDATION
             // ------------------------------------------------
+
+            if (!date) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Tanggal tidak boleh kosong."
+                });
+            }
 
             if (!screenshot) {
 
@@ -2016,24 +1640,6 @@ app.post(
                     error:
                         "IMGBB_API_KEY belum dikonfigurasi di Railway."
                 });
-            }
-
-            // ------------------------------------------------
-            // PASTIKAN DATE SEPARATOR ADA
-            // ------------------------------------------------
-
-            const separatorCreated =
-                await ensureDateSeparator(
-                    date
-                );
-
-            if (
-                separatorCreated
-            ) {
-
-                await formatDateSeparator(
-                    date
-                );
             }
 
             // ------------------------------------------------
@@ -2112,6 +1718,8 @@ app.post(
                 /*
                  * Jika belum ada signal,
                  * buat satu baris khusus screenshot.
+                 *
+                 * Tidak membuat DATE_SEPARATOR.
                  */
 
                 await sheets.spreadsheets.values.append({
@@ -2503,7 +2111,7 @@ const server =
             );
 
             console.log(
-                "📅 Date Separator : ENABLED"
+                "📅 Date Separator : DISABLED"
             );
 
             console.log(
