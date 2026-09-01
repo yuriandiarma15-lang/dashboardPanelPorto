@@ -742,10 +742,6 @@ async function getAllSignals() {
 
     return rows
 
-        // ----------------------------------------------------
-        // HILANGKAN DATE SEPARATOR DARI DATA SIGNAL
-        // ----------------------------------------------------
-
         .filter(row => {
 
             const id =
