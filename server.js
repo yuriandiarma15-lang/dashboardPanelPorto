@@ -2,6 +2,7 @@
 // AI ASSISTANT GOLD JOURNAL
 // server.js
 // GOOGLE SHEETS + IMGBB VERSION
+// DATE SEPARATOR VERSION
 // ============================================================
 
 const express = require("express");
@@ -167,6 +168,13 @@ const HEADERS = [
 ];
 
 // ============================================================
+// DATE SEPARATOR CONSTANT
+// ============================================================
+
+const DATE_SEPARATOR_ID =
+    "DATE_SEPARATOR";
+
+// ============================================================
 // ID GENERATOR
 // ============================================================
 
@@ -310,6 +318,401 @@ async function ensureSheetHeader() {
 }
 
 // ============================================================
+// CHECK DATE SEPARATOR
+// ============================================================
+
+async function dateSeparatorExists(date) {
+
+    if (!sheets) {
+
+        throw new Error(
+            "Google Sheets belum terhubung."
+        );
+    }
+
+    const response =
+        await sheets.spreadsheets.values.get({
+
+            spreadsheetId:
+                GOOGLE_SHEET_ID,
+
+            range:
+                `${SHEET_NAME}!A2:B`
+        });
+
+    const rows =
+        response.data.values || [];
+
+    for (
+        let i = 0;
+        i < rows.length;
+        i++
+    ) {
+
+        const id =
+            String(
+                rows[i][0] || ""
+            ).trim();
+
+        const rowDate =
+            String(
+                rows[i][1] || ""
+            ).trim();
+
+        if (
+            id === DATE_SEPARATOR_ID &&
+            rowDate === String(date).trim()
+        ) {
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// ============================================================
+// CREATE DATE SEPARATOR
+// ============================================================
+
+async function ensureDateSeparator(date) {
+
+    if (!sheets) {
+
+        throw new Error(
+            "Google Sheets belum terhubung."
+        );
+    }
+
+    const cleanDate =
+        String(date || "").trim();
+
+    if (!cleanDate) {
+
+        throw new Error(
+            "Tanggal tidak boleh kosong."
+        );
+    }
+
+    // --------------------------------------------------------
+    // CEK APAKAH SUDAH ADA
+    // --------------------------------------------------------
+
+    const exists =
+        await dateSeparatorExists(
+            cleanDate
+        );
+
+    if (exists) {
+
+        return false;
+    }
+
+    // --------------------------------------------------------
+    // BUAT BARIS SEPARATOR
+    // --------------------------------------------------------
+
+    await sheets.spreadsheets.values.append({
+
+        spreadsheetId:
+            GOOGLE_SHEET_ID,
+
+        range:
+            `${SHEET_NAME}!A:L`,
+
+        valueInputOption:
+            "RAW",
+
+        insertDataOption:
+            "INSERT_ROWS",
+
+        requestBody: {
+
+            values: [[
+
+                DATE_SEPARATOR_ID,
+
+                cleanDate,
+
+                "",
+
+                "",
+
+                "",
+
+                "",
+
+                "",
+
+                "",
+
+                "",
+
+                "",
+
+                "",
+
+                ""
+            ]]
+        }
+    });
+
+    console.log(
+        `📅 DATE SEPARATOR DIBUAT: ${cleanDate}`
+    );
+
+    return true;
+}
+
+// ============================================================
+// FORMAT DATE SEPARATOR
+// ============================================================
+
+async function formatDateSeparator(date) {
+
+    try {
+
+        const metadata =
+            await sheets.spreadsheets.get({
+
+                spreadsheetId:
+                    GOOGLE_SHEET_ID,
+
+                fields:
+                    "sheets.properties"
+            });
+
+        const journalSheet =
+            metadata.data.sheets.find(
+                sheet =>
+                    sheet.properties.title ===
+                    SHEET_NAME
+            );
+
+        if (!journalSheet) {
+
+            return;
+        }
+
+        const sheetId =
+            journalSheet.properties.sheetId;
+
+        const response =
+            await sheets.spreadsheets.values.get({
+
+                spreadsheetId:
+                    GOOGLE_SHEET_ID,
+
+                range:
+                    `${SHEET_NAME}!A:A`
+            });
+
+        const rows =
+            response.data.values || [];
+
+        let rowNumber = null;
+
+        for (
+            let i = 0;
+            i < rows.length;
+            i++
+        ) {
+
+            if (
+                String(
+                    rows[i][0] || ""
+                ).trim() ===
+                DATE_SEPARATOR_ID
+            ) {
+
+                const dateResponse =
+                    await sheets.spreadsheets.values.get({
+
+                        spreadsheetId:
+                            GOOGLE_SHEET_ID,
+
+                        range:
+                            `${SHEET_NAME}!B${i + 1}`
+                    });
+
+                const rowDate =
+                    String(
+                        dateResponse.data.values?.[0]?.[0] || ""
+                    ).trim();
+
+                if (
+                    rowDate ===
+                    String(date).trim()
+                ) {
+
+                    rowNumber =
+                        i + 1;
+
+                    break;
+                }
+            }
+        }
+
+        if (!rowNumber) {
+
+            return;
+        }
+
+        // ----------------------------------------------------
+        // FORMAT BARIS
+        // ----------------------------------------------------
+
+        await sheets.spreadsheets.batchUpdate({
+
+            spreadsheetId:
+                GOOGLE_SHEET_ID,
+
+            requestBody: {
+
+                requests: [
+
+                    {
+                        mergeCells: {
+
+                            range: {
+
+                                sheetId,
+
+                                startRowIndex:
+                                    rowNumber - 1,
+
+                                endRowIndex:
+                                    rowNumber,
+
+                                startColumnIndex:
+                                    0,
+
+                                endColumnIndex:
+                                    12
+                            },
+
+                            mergeType:
+                                "MERGE_ALL"
+                        }
+                    },
+
+                    {
+                        repeatCell: {
+
+                            range: {
+
+                                sheetId,
+
+                                startRowIndex:
+                                    rowNumber - 1,
+
+                                endRowIndex:
+                                    rowNumber,
+
+                                startColumnIndex:
+                                    0,
+
+                                endColumnIndex:
+                                    12
+                            },
+
+                            cell: {
+
+                                userEnteredFormat: {
+
+                                    horizontalAlignment:
+                                        "CENTER",
+
+                                    verticalAlignment:
+                                        "MIDDLE",
+
+                                    textFormat: {
+
+                                        bold:
+                                            true,
+
+                                        fontSize:
+                                            12
+                                    }
+                                }
+                            },
+
+                            fields:
+                                "userEnteredFormat(horizontalAlignment,verticalAlignment,textFormat)"
+                        }
+                    },
+
+                    {
+                        updateDimensionProperties: {
+
+                            range: {
+
+                                sheetId,
+
+                                dimension:
+                                    "ROWS",
+
+                                startIndex:
+                                    rowNumber - 1,
+
+                                endIndex:
+                                    rowNumber
+                            },
+
+                            properties: {
+
+                                pixelSize:
+                                    32
+                            },
+
+                            fields:
+                                "pixelSize"
+                        }
+                    }
+                ]
+            }
+        });
+
+        // ----------------------------------------------------
+        // UBAH ISI MENJADI TAMPILAN TANGGAL
+        // ----------------------------------------------------
+
+        await sheets.spreadsheets.values.update({
+
+            spreadsheetId:
+                GOOGLE_SHEET_ID,
+
+            range:
+                `${SHEET_NAME}!A${rowNumber}`,
+
+            valueInputOption:
+                "RAW",
+
+            requestBody: {
+
+                values: [[
+                    `===== ${date} =====`
+                ]]
+            }
+        });
+
+        console.log(
+            `🎨 DATE SEPARATOR DIFORMAT: ${date}`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "⚠️ Gagal memformat date separator:"
+        );
+
+        console.error(
+            error.message
+        );
+    }
+}
+
+// ============================================================
 // GET ALL SIGNALS
 // ============================================================
 
@@ -337,65 +740,84 @@ async function getAllSignals() {
     const rows =
         response.data.values || [];
 
-    return rows.map(row => {
+    return rows
 
-        let numericPnl = 0;
+        // ----------------------------------------------------
+        // HILANGKAN DATE SEPARATOR DARI DATA SIGNAL
+        // ----------------------------------------------------
 
-        if (
-            row[9] !== undefined &&
-            row[9] !== ""
-        ) {
+        .filter(row => {
 
-            numericPnl =
-                Number(row[9]);
+            const id =
+                String(
+                    row[0] || ""
+                ).trim();
+
+            return (
+                id !==
+                DATE_SEPARATOR_ID
+            );
+        })
+
+        .map(row => {
+
+            let numericPnl = 0;
 
             if (
-                Number.isNaN(numericPnl)
+                row[9] !== undefined &&
+                row[9] !== ""
             ) {
 
-                numericPnl = 0;
+                numericPnl =
+                    Number(row[9]);
+
+                if (
+                    Number.isNaN(numericPnl)
+                ) {
+
+                    numericPnl = 0;
+                }
             }
-        }
 
-        return {
+            return {
 
-            id:
-                row[0] || "",
+                id:
+                    row[0] || "",
 
-            date:
-                row[1] || "",
+                date:
+                    row[1] || "",
 
-            time:
-                row[2] || "",
+                time:
+                    row[2] || "",
 
-            direction:
-                row[3] || "BUY",
+                direction:
+                    row[3] || "BUY",
 
-            entryPrice:
-                row[4] || "",
+                entryPrice:
+                    row[4] || "",
 
-            tp1Price:
-                row[5] || "",
+                tp1Price:
+                    row[5] || "",
 
-            tp2Price:
-                row[6] || "",
+                tp2Price:
+                    row[6] || "",
 
-            slPrice:
-                row[7] || "",
+                slPrice:
+                    row[7] || "",
 
-            result:
-                row[8] || "",
+                result:
+                    row[8] || "",
 
-            pnl:
-                numericPnl,
+                pnl:
+                    numericPnl,
 
-            createdAt:
-                row[10] || "",
+                createdAt:
+                    row[10] || "",
 
-            screenshotUrl:
-                row[11] || null
-        };
-    });
+                screenshotUrl:
+                    row[11] || null
+            };
+        });
 }
 
 // ============================================================
@@ -693,6 +1115,9 @@ app.get(
             imgbb:
                 Boolean(IMGBB_API_KEY),
 
+            dateSeparator:
+                true,
+
             timestamp:
                 new Date().toISOString()
         });
@@ -718,7 +1143,7 @@ app.get(
                 "ai-assistant-gold-journal",
 
             version:
-                "4.0.0",
+                "4.1.0",
 
             database:
                 "Google Sheets",
@@ -728,6 +1153,9 @@ app.get(
 
             sheet:
                 SHEET_NAME,
+
+            dateSeparator:
+                true,
 
             node:
                 process.version,
@@ -1077,6 +1505,24 @@ app.post(
             }
 
             // ------------------------------------------------
+            // PASTIKAN DATE SEPARATOR ADA
+            // ------------------------------------------------
+
+            const separatorCreated =
+                await ensureDateSeparator(
+                    date
+                );
+
+            if (
+                separatorCreated
+            ) {
+
+                await formatDateSeparator(
+                    date
+                );
+            }
+
+            // ------------------------------------------------
             // CREATE SIGNAL
             // ------------------------------------------------
 
@@ -1250,6 +1696,23 @@ app.delete(
             const id =
                 req.params.id;
 
+            // ------------------------------------------------
+            // JANGAN IZINKAN HAPUS DATE SEPARATOR
+            // ------------------------------------------------
+
+            if (
+                id === DATE_SEPARATOR_ID
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Date separator tidak boleh dihapus melalui endpoint signal."
+                });
+            }
+
             const rowNumber =
                 await findSignalRow(
                     id
@@ -1358,10 +1821,6 @@ function uploadToImgBB(base64Image) {
                 );
             }
 
-            // ------------------------------------------------
-            // HANYA AMBIL BASE64
-            // ------------------------------------------------
-
             let imageData =
                 base64Image;
 
@@ -1374,10 +1833,6 @@ function uploadToImgBB(base64Image) {
                         ","
                     )[1];
             }
-
-            // ------------------------------------------------
-            // URL IMGBB
-            // ------------------------------------------------
 
             const postData =
                 new URLSearchParams({
@@ -1568,6 +2023,24 @@ app.post(
             }
 
             // ------------------------------------------------
+            // PASTIKAN DATE SEPARATOR ADA
+            // ------------------------------------------------
+
+            const separatorCreated =
+                await ensureDateSeparator(
+                    date
+                );
+
+            if (
+                separatorCreated
+            ) {
+
+                await formatDateSeparator(
+                    date
+                );
+            }
+
+            // ------------------------------------------------
             // UPLOAD KE IMGBB
             // ------------------------------------------------
 
@@ -1641,10 +2114,8 @@ app.post(
             } else {
 
                 /*
-                 * Jika hari tersebut belum memiliki signal,
-                 * kita buat satu baris khusus screenshot.
-                 *
-                 * Direction dan result dikosongkan.
+                 * Jika belum ada signal,
+                 * buat satu baris khusus screenshot.
                  */
 
                 await sheets.spreadsheets.values.append({
@@ -2033,6 +2504,10 @@ const server =
 
             console.log(
                 "🖼️ Image  : ImgBB"
+            );
+
+            console.log(
+                "📅 Date Separator : ENABLED"
             );
 
             console.log(
