@@ -565,56 +565,6 @@ h1 em{
 }
 
 /* =========================================================
-   SCREENSHOT
-========================================================= */
-
-.shot-section{
-  margin-top:32px;
-}
-
-.shot-title{
-  font-size:12px;
-  color:var(--paper-dim);
-
-  letter-spacing:0.3px;
-
-  margin-bottom:10px;
-
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.shot-frame{
-  border:1px solid var(--hairline-strong);
-
-  border-radius:8px;
-
-  overflow:hidden;
-
-  background:var(--surface);
-}
-
-.shot-frame img{
-  width:100%;
-  display:block;
-}
-
-.shot-empty{
-  padding:40px 16px;
-
-  text-align:center;
-
-  color:var(--paper-dim);
-
-  font-size:13px;
-
-  border:1px dashed var(--hairline-strong);
-
-  border-radius:8px;
-}
-
-/* =========================================================
    LEDGER
 ========================================================= */
 
@@ -751,29 +701,6 @@ h1 em{
   padding:10px 12px;
 
   border-radius:6px;
-}
-
-.file-btn{
-
-  display:inline-block;
-
-  padding:10px 16px;
-
-  background:var(--surface);
-
-  border:1px solid var(--hairline-strong);
-
-  border-radius:6px;
-
-  font-size:13px;
-
-  color:var(--paper);
-
-  cursor:pointer;
-}
-
-.file-btn:hover{
-  border-color:var(--brass-dim);
 }
 
 .btn-primary{
@@ -1201,23 +1128,6 @@ Rincian sinyal
 </div>
 
 
-<div class="shot-section">
-
-<div class="shot-title">
-<span>Bukti PnL (MT5)</span>
-</div>
-
-<div id="shotWrap">
-
-<div class="shot-empty">
-Belum ada screenshot untuk tanggal ini
-</div>
-
-</div>
-
-</div>
-
-
 <div id="adminDailyPanel"></div>
 
 </div>
@@ -1435,16 +1345,6 @@ function fmtDateLabel(dateStr){
    NUMBER FORMAT
 ========================================================= */
 
-/*
-  Semua harga ditampilkan tanpa angka desimal.
-
-  3550
-  3550.00 -> 3550
-  3550.50 -> 3551
-
-  Untuk harga XAUUSD kita memang buat integer.
-*/
-
 function fmtPrice(value){
 
   if(
@@ -1596,7 +1496,7 @@ async function loadDay(dateStr){
     if(e.name === 'AbortError'){
       return null;
     }
-    return {signals:[],screenshot:null};
+    return {signals:[]};
   }
 }
 
@@ -1830,31 +1730,6 @@ async function renderDaily(){
   );
 
 
-  const shotWrap =
-    document.getElementById(
-      'shotWrap'
-    );
-
-
-  shotWrap.innerHTML =
-    data.screenshot
-
-      ? `
-        <div class="shot-frame">
-          <img
-            src="${data.screenshot}"
-            alt="Bukti PnL MT5"
-          >
-        </div>
-      `
-
-      : `
-        <div class="shot-empty">
-          Belum ada screenshot untuk tanggal ini
-        </div>
-      `;
-
-
   renderAdminDailyPanel(data);
 
 }
@@ -1892,16 +1767,6 @@ function renderSignalsList(signals){
     );
 
 
-  /*
-     SATU HARGA HASIL SAJA
-
-     Jika TP1 -> harga TP1
-     Jika TP2 -> harga TP2
-     Jika SL  -> harga SL
-     Jika PENDING -> harga pending
-     Jika NO SIGNAL -> -
-  */
-
   const head = `
 
     <div class="signal-row head">
@@ -1937,12 +1802,7 @@ function renderSignalsList(signals){
 
 
       const resultPrice =
-        fmtPrice(
-          s.resultPrice ??
-          s.tpSlPrice ??
-          s.targetPrice ??
-          ''
-        );
+        fmtPrice(s.resultPrice);
 
 
       const pnl =
@@ -2094,7 +1954,7 @@ function renderAdminDailyPanel(data){
 
         <div class="field">
 
-          <label>
+          <label id="entryPriceLabel">
             Harga Entry
           </label>
 
@@ -2143,7 +2003,7 @@ function renderAdminDailyPanel(data){
         </div>
 
 
-        <!-- SATU HARGA HASIL -->
+        <!-- HARGA HASIL (hanya untuk TP1 / TP2 / SL) -->
 
         <div
           class="field"
@@ -2207,63 +2067,17 @@ function renderAdminDailyPanel(data){
         id="adminSignalList"
       ></div>
 
-
-      <hr class="admin-divider">
-
-
-      <h3>
-        Screenshot PnL (MT5)
-      </h3>
-
-
-      <div class="field">
-
-        <input
-          type="file"
-          id="inFile"
-          accept="image/*"
-          style="display:none;"
-        >
-
-        <label
-          for="inFile"
-          class="file-btn"
-        >
-          Pilih foto
-        </label>
-
-        <span
-          id="fileName"
-          style="
-            font-size:12px;
-            color:var(--paper-dim);
-            margin-left:8px;
-          "
-        ></span>
-
-      </div>
-
-
-      <button
-        class="btn-primary"
-        id="saveShotBtn"
-      >
-        Simpan screenshot
-      </button>
-
-
-      <div
-        class="save-msg"
-        id="saveShotMsg"
-      ></div>
-
     </div>
 
   `;
 
 
   /* =======================================================
-     UPDATE LABEL HARGA
+     UPDATE FIELD SESUAI HASIL
+     - TP1 / TP2 / SL : tampilkan field "Harga Hasil"
+     - PENDING        : field harga hasil disembunyikan,
+                         harga cukup diisi lewat "Harga Entry"
+     - NO SIGNAL      : field harga entry & hasil disembunyikan
   ======================================================= */
 
   const resultSelect =
@@ -2286,6 +2100,11 @@ function renderAdminDailyPanel(data){
       'inResultPrice'
     );
 
+  const entryPriceField =
+    document.getElementById(
+      'inEntryPrice'
+    ).closest('.field');
+
 
   function updateResultField(){
 
@@ -2295,63 +2114,45 @@ function renderAdminDailyPanel(data){
 
     if(result === 'TP1'){
 
-      resultLabel.textContent =
-        'Harga TP 1';
-
-      resultPriceInput.placeholder =
-        '3560';
-
-      resultPriceField.style.display =
-        'block';
+      resultLabel.textContent = 'Harga TP 1';
+      resultPriceInput.placeholder = '3560';
+      resultPriceField.style.display = 'block';
+      entryPriceField.style.display = 'block';
 
     }
 
     else if(result === 'TP2'){
 
-      resultLabel.textContent =
-        'Harga TP 2';
-
-      resultPriceInput.placeholder =
-        '3570';
-
-      resultPriceField.style.display =
-        'block';
+      resultLabel.textContent = 'Harga TP 2';
+      resultPriceInput.placeholder = '3570';
+      resultPriceField.style.display = 'block';
+      entryPriceField.style.display = 'block';
 
     }
 
     else if(result === 'SL'){
 
-      resultLabel.textContent =
-        'Harga SL';
-
-      resultPriceInput.placeholder =
-        '3530';
-
-      resultPriceField.style.display =
-        'block';
+      resultLabel.textContent = 'Harga SL';
+      resultPriceInput.placeholder = '3530';
+      resultPriceField.style.display = 'block';
+      entryPriceField.style.display = 'block';
 
     }
 
     else if(result === 'PENDING'){
 
-      resultLabel.textContent =
-        'Harga Pending';
-
-      resultPriceInput.placeholder =
-        '3550';
-
-      resultPriceField.style.display =
-        'block';
+      resultPriceField.style.display = 'none';
+      resultPriceInput.value = '';
+      entryPriceField.style.display = 'block';
 
     }
 
     else{
 
-      resultPriceField.style.display =
-        'none';
-
-      resultPriceInput.value =
-        '';
+      resultPriceField.style.display = 'none';
+      resultPriceInput.value = '';
+      entryPriceField.style.display = 'none';
+      document.getElementById('inEntryPrice').value = '';
 
     }
 
@@ -2421,14 +2222,25 @@ function renderAdminDailyPanel(data){
             .getElementById('addSignalMsg');
 
 
-        /* NO SIGNAL */
-
         if(result === 'NO SIGNAL'){
 
           if(!time){
 
             msg.textContent =
               'Isi jam terlebih dahulu.';
+
+            return;
+
+          }
+
+        }
+
+        else if(result === 'PENDING'){
+
+          if(!time || !entryPrice){
+
+            msg.textContent =
+              'Isi jam dan harga entry.';
 
             return;
 
@@ -2480,14 +2292,12 @@ function renderAdminDailyPanel(data){
 
               result,
 
-              /*
-                 SATU FIELD HARGA SAJA
-              */
-
               resultPrice:
-                result === 'NO SIGNAL'
-                  ? ''
-                  : fmtPrice(resultPrice),
+                (result === 'TP1' ||
+                 result === 'TP2' ||
+                 result === 'SL')
+                  ? fmtPrice(resultPrice)
+                  : '',
 
               pnl:
                 result === 'NO SIGNAL'
@@ -2555,117 +2365,6 @@ function renderAdminDailyPanel(data){
     signals
   );
 
-
-  /* =======================================================
-     SCREENSHOT
-  ======================================================= */
-
-  let pendingScreenshot =
-    data.screenshot || null;
-
-
-  document
-    .getElementById('inFile')
-    .addEventListener(
-      'change',
-      (e)=>{
-
-        const file =
-          e.target.files[0];
-
-        if(!file) return;
-
-
-        document.getElementById(
-          'fileName'
-        ).textContent =
-          file.name;
-
-
-        const reader =
-          new FileReader();
-
-
-        reader.onload =
-          ()=>{
-            pendingScreenshot =
-              reader.result;
-          };
-
-
-        reader.readAsDataURL(file);
-
-      }
-    );
-
-
-  document
-    .getElementById('saveShotBtn')
-    .addEventListener(
-      'click',
-      async ()=>{
-
-        const msg =
-          document.getElementById(
-            'saveShotMsg'
-          );
-
-
-        if(!pendingScreenshot){
-
-          msg.textContent =
-            'Pilih screenshot terlebih dahulu.';
-
-          return;
-
-        }
-
-
-        try{
-
-          await apiWrite(
-
-            '/api/day/'
-            +state.selectedDate
-            +'/screenshot',
-
-            'POST',
-
-            {
-              screenshot:
-                pendingScreenshot
-            }
-
-          );
-
-
-          invalidateDayCache(
-            state.selectedDate
-          );
-
-          invalidateMonthCache(
-            state.selectedDate
-          );
-
-
-          msg.textContent =
-            'Screenshot tersimpan.';
-
-
-          await renderDaily();
-
-
-        }catch(e){
-
-          msg.textContent =
-            e.message ||
-            'Gagal menyimpan, coba lagi.';
-
-        }
-
-      }
-    );
-
 }
 
 
@@ -2711,12 +2410,7 @@ function renderAdminSignalList(signals){
 
 
       const resultPrice =
-        fmtPrice(
-          s.resultPrice ??
-          s.tpSlPrice ??
-          s.targetPrice ??
-          ''
-        );
+        fmtPrice(s.resultPrice);
 
 
       const pnl =
