@@ -2,7 +2,8 @@
 // AI ASSISTANT GOLD JOURNAL
 // server.js
 // GOOGLE SHEETS + IMGBB VERSION
-// NO DATE SEPARATOR VERSION
+// NO DATE SEPARATOR
+// RESULT PRICE AUTO MAPPING VERSION
 // ============================================================
 
 const express = require("express");
@@ -75,7 +76,7 @@ function initializeGoogleSheets() {
         );
 
         console.error(
-            "Pastikan Railway Variables memiliki:"
+            "Pastikan Environment Variables memiliki:"
         );
 
         console.error(
@@ -166,6 +167,15 @@ const HEADERS = [
 
     "screenshotUrl"
 ];
+
+// ============================================================
+// OLD DATE SEPARATOR CONSTANT
+// ============================================================
+// Tetap digunakan untuk mendeteksi DATA LAMA.
+// Tidak akan pernah dibuat lagi oleh server baru.
+
+const DATE_SEPARATOR_ID =
+    "DATE_SEPARATOR";
 
 // ============================================================
 // ID GENERATOR
@@ -340,18 +350,35 @@ async function getAllSignals() {
 
     return rows
 
+        // ----------------------------------------------------
+        // FILTER BARIS KOSONG DAN DATE SEPARATOR LAMA
+        // ----------------------------------------------------
+
         .filter(row => {
 
-            /*
-             * Abaikan baris kosong.
-             *
-             * Tidak ada lagi DATE_SEPARATOR.
-             */
+            const id =
+                String(
+                    row[0] || ""
+                ).trim();
 
-            return row.some(
-                value =>
-                    String(value || "").trim() !== ""
-            );
+            // Abaikan date separator lama
+            if (
+                id === DATE_SEPARATOR_ID
+            ) {
+
+                return false;
+            }
+
+            // Abaikan baris benar-benar kosong
+            const hasData =
+                row.some(
+                    value =>
+                        String(
+                            value || ""
+                        ).trim() !== ""
+                );
+
+            return hasData;
         })
 
         .map(row => {
@@ -367,7 +394,9 @@ async function getAllSignals() {
                     Number(row[9]);
 
                 if (
-                    Number.isNaN(numericPnl)
+                    Number.isNaN(
+                        numericPnl
+                    )
                 ) {
 
                     numericPnl = 0;
@@ -386,7 +415,7 @@ async function getAllSignals() {
                     row[2] || "",
 
                 direction:
-                    row[3] || "",
+                    row[3] || "BUY",
 
                 entryPrice:
                     row[4] || "",
@@ -426,7 +455,8 @@ async function getSignalsByDate(date) {
 
     return signals.filter(
         signal =>
-            signal.date === date
+            String(signal.date).trim() ===
+            String(date).trim()
     );
 }
 
@@ -447,7 +477,7 @@ async function getAvailableDates() {
         if (signal.date) {
 
             dates.add(
-                signal.date
+                String(signal.date).trim()
             );
         }
     });
@@ -548,7 +578,8 @@ async function findScreenshotRow(date) {
             ).trim();
 
         if (
-            rowDate === String(date).trim() &&
+            rowDate ===
+                String(date).trim() &&
             screenshotUrl
         ) {
 
@@ -751,6 +782,9 @@ app.get(
 
             dateSeparator:
                 false,
+
+            resultPriceMapping:
+                true,
 
             node:
                 process.version,
@@ -1020,12 +1054,14 @@ app.post(
 
                 result,
 
-                pnl
+                pnl,
+
+                price
 
             } = req.body;
 
             // ------------------------------------------------
-            // VALIDATION
+            // VALIDATION DATE
             // ------------------------------------------------
 
             if (!date) {
@@ -1039,6 +1075,10 @@ app.post(
                 });
             }
 
+            // ------------------------------------------------
+            // VALIDATION TIME
+            // ------------------------------------------------
+
             if (!time) {
 
                 return res.status(400).json({
@@ -1049,6 +1089,10 @@ app.post(
                         "Jam signal wajib diisi."
                 });
             }
+
+            // ------------------------------------------------
+            // VALIDATION RESULT
+            // ------------------------------------------------
 
             if (!result) {
 
@@ -1112,29 +1156,142 @@ app.post(
                 });
             }
 
-            // ------------------------------------------------
+            // =================================================
             // HARGA
+            // =================================================
+            //
+            // Website bisa mengirim:
+            //
+            // price
+            // entryPrice
+            // tp1Price
+            // tp2Price
+            // slPrice
+            //
+            // Kita prioritaskan field khusus jika ada.
+            // Jika kosong, gunakan "price".
+            //
+            // Kemudian harga otomatis ditempatkan berdasarkan
+            // RESULT.
+            //
+            // TP1 -> kolom F
+            // TP2 -> kolom G
+            // SL  -> kolom H
+            //
+            // =================================================
+
+            const cleanEntryPrice =
+                entryPrice !== undefined &&
+                entryPrice !== null
+                    ? String(
+                        entryPrice
+                    ).trim()
+                    : "";
+
+            const cleanGenericPrice =
+                price !== undefined &&
+                price !== null
+                    ? String(
+                        price
+                    ).trim()
+                    : "";
+
+            let finalTp1Price =
+                tp1Price !== undefined &&
+                tp1Price !== null
+                    ? String(
+                        tp1Price
+                    ).trim()
+                    : "";
+
+            let finalTp2Price =
+                tp2Price !== undefined &&
+                tp2Price !== null
+                    ? String(
+                        tp2Price
+                    ).trim()
+                    : "";
+
+            let finalSlPrice =
+                slPrice !== undefined &&
+                slPrice !== null
+                    ? String(
+                        slPrice
+                    ).trim()
+                    : "";
+
             // ------------------------------------------------
-            //
-            // Jika harga tidak dikirim,
-            // maka tetap kosong.
-            //
-            // Khusus NO SIGNAL:
-            // harga dibuat kosong agar tidak muncul
-            // harga entry / TP / SL yang tidak ada.
+            // JIKA ADA SATU HARGA SAJA
             // ------------------------------------------------
 
-            const isNoSignal =
-                String(result).trim() ===
-                "NO SIGNAL";
+            const fallbackPrice =
+                cleanGenericPrice ||
+                cleanEntryPrice;
+
+            // ------------------------------------------------
+            // TP1
+            // ------------------------------------------------
+
+            if (
+                result === "TP1"
+            ) {
+
+                if (
+                    !finalTp1Price &&
+                    fallbackPrice
+                ) {
+
+                    finalTp1Price =
+                        fallbackPrice;
+                }
+            }
+
+            // ------------------------------------------------
+            // TP2
+            // ------------------------------------------------
+
+            if (
+                result === "TP2"
+            ) {
+
+                if (
+                    !finalTp2Price &&
+                    fallbackPrice
+                ) {
+
+                    finalTp2Price =
+                        fallbackPrice;
+                }
+            }
+
+            // ------------------------------------------------
+            // SL
+            // ------------------------------------------------
+
+            if (
+                result === "SL"
+            ) {
+
+                if (
+                    !finalSlPrice &&
+                    fallbackPrice
+                ) {
+
+                    finalSlPrice =
+                        fallbackPrice;
+                }
+            }
+
+            // ------------------------------------------------
+            // CREATE SIGNAL
+            // ------------------------------------------------
 
             const signal = {
 
                 id:
                     generateId(),
 
-                date:
-                    date,
+                date,
 
                 time:
                     String(
@@ -1142,61 +1299,21 @@ app.post(
                     ).trim(),
 
                 direction:
-                    isNoSignal
-                        ? ""
-                        : (
-                            direction === "SELL"
-                                ? "SELL"
-                                : "BUY"
-                        ),
+                    direction === "SELL"
+                        ? "SELL"
+                        : "BUY",
 
                 entryPrice:
-                    isNoSignal
-                        ? ""
-                        : (
-                            entryPrice !== undefined &&
-                            entryPrice !== null
-                                ? String(
-                                    entryPrice
-                                ).trim()
-                                : ""
-                        ),
+                    cleanEntryPrice,
 
                 tp1Price:
-                    isNoSignal
-                        ? ""
-                        : (
-                            tp1Price !== undefined &&
-                            tp1Price !== null
-                                ? String(
-                                    tp1Price
-                                ).trim()
-                                : ""
-                        ),
+                    finalTp1Price,
 
                 tp2Price:
-                    isNoSignal
-                        ? ""
-                        : (
-                            tp2Price !== undefined &&
-                            tp2Price !== null
-                                ? String(
-                                    tp2Price
-                                ).trim()
-                                : ""
-                        ),
+                    finalTp2Price,
 
                 slPrice:
-                    isNoSignal
-                        ? ""
-                        : (
-                            slPrice !== undefined &&
-                            slPrice !== null
-                                ? String(
-                                    slPrice
-                                ).trim()
-                                : ""
-                        ),
+                    finalSlPrice,
 
                 result:
                     String(
@@ -1218,6 +1335,10 @@ app.post(
                     null
             };
 
+            // ------------------------------------------------
+            // PNL VALIDATION
+            // ------------------------------------------------
+
             if (
                 Number.isNaN(
                     signal.pnl
@@ -1227,9 +1348,61 @@ app.post(
                 signal.pnl = 0;
             }
 
-            // ------------------------------------------------
+            // =================================================
+            // LOG HARGA
+            // =================================================
+
+            console.log(
+                "----------------------------------------------"
+            );
+
+            console.log(
+                "📊 SIGNAL BARU"
+            );
+
+            console.log(
+                `📅 Date    : ${signal.date}`
+            );
+
+            console.log(
+                `⏰ Time    : ${signal.time}`
+            );
+
+            console.log(
+                `📈 Direction: ${signal.direction}`
+            );
+
+            console.log(
+                `💰 Entry   : ${signal.entryPrice || "-"}`
+            );
+
+            console.log(
+                `🎯 TP1     : ${signal.tp1Price || "-"}`
+            );
+
+            console.log(
+                `🎯 TP2     : ${signal.tp2Price || "-"}`
+            );
+
+            console.log(
+                `🛑 SL      : ${signal.slPrice || "-"}`
+            );
+
+            console.log(
+                `📌 Result  : ${signal.result}`
+            );
+
+            console.log(
+                `💵 PNL     : ${signal.pnl}`
+            );
+
+            console.log(
+                "----------------------------------------------"
+            );
+
+            // =================================================
             // SAVE TO GOOGLE SHEETS
-            // ------------------------------------------------
+            // =================================================
 
             await sheets.spreadsheets.values.append({
 
@@ -1277,7 +1450,7 @@ app.post(
             });
 
             console.log(
-                `✅ SIGNAL TERSIMPAN: ${signal.date} ${signal.time} ${signal.result}`
+                `✅ SIGNAL TERSIMPAN: ${signal.date} ${signal.time}`
             );
 
             return res.json({
@@ -1319,6 +1492,23 @@ app.delete(
 
             const id =
                 req.params.id;
+
+            // ------------------------------------------------
+            // JANGAN IZINKAN HAPUS DATE SEPARATOR LAMA
+            // ------------------------------------------------
+
+            if (
+                id === DATE_SEPARATOR_ID
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Date separator tidak dapat dihapus melalui endpoint signal."
+                });
+            }
 
             const rowNumber =
                 await findSignalRow(
@@ -1638,7 +1828,7 @@ app.post(
                     success: false,
 
                     error:
-                        "IMGBB_API_KEY belum dikonfigurasi di Railway."
+                        "IMGBB_API_KEY belum dikonfigurasi."
                 });
             }
 
@@ -1715,12 +1905,11 @@ app.post(
 
             } else {
 
-                /*
-                 * Jika belum ada signal,
-                 * buat satu baris khusus screenshot.
-                 *
-                 * Tidak membuat DATE_SEPARATOR.
-                 */
+                // ------------------------------------------------
+                // JIKA BELUM ADA SIGNAL
+                // BUAT BARIS SCREENSHOT BIASA
+                // TANPA DATE SEPARATOR
+                // ------------------------------------------------
 
                 await sheets.spreadsheets.values.append({
 
@@ -2112,6 +2301,10 @@ const server =
 
             console.log(
                 "📅 Date Separator : DISABLED"
+            );
+
+            console.log(
+                "💰 Result Price Mapping : ENABLED"
             );
 
             console.log(
