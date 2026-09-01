@@ -1,11 +1,12 @@
 // ============================================================
 // AI ASSISTANT GOLD JOURNAL
 // server.js
-// GOOGLE SHEETS DATABASE VERSION
+// GOOGLE SHEETS + IMGBB VERSION
 // ============================================================
 
 const express = require("express");
 const path = require("path");
+const https = require("https");
 const { google } = require("googleapis");
 
 // ============================================================
@@ -37,6 +38,13 @@ const GOOGLE_PRIVATE_KEY =
 const SHEET_NAME = "JOURNAL";
 
 // ============================================================
+// IMGBB CONFIG
+// ============================================================
+
+const IMGBB_API_KEY =
+    process.env.IMGBB_API_KEY;
+
+// ============================================================
 // ADMIN PASSWORD
 // ============================================================
 
@@ -44,10 +52,14 @@ const ADMIN_PASSWORD =
     process.env.ADMIN_PASSWORD || "Bira1234_";
 
 // ============================================================
-// GOOGLE AUTH
+// GOOGLE SHEETS CLIENT
 // ============================================================
 
 let sheets = null;
+
+// ============================================================
+// GOOGLE SHEETS INITIALIZATION
+// ============================================================
 
 function initializeGoogleSheets() {
 
@@ -124,51 +136,68 @@ function initializeGoogleSheets() {
 }
 
 // ============================================================
-// GENERATE ID
+// HEADERS GOOGLE SHEETS
+// ============================================================
+
+const HEADERS = [
+
+    "id",
+
+    "date",
+
+    "time",
+
+    "direction",
+
+    "entryPrice",
+
+    "tp1Price",
+
+    "tp2Price",
+
+    "slPrice",
+
+    "result",
+
+    "pnl",
+
+    "createdAt",
+
+    "screenshotUrl"
+];
+
+// ============================================================
+// ID GENERATOR
 // ============================================================
 
 function generateId() {
 
     return (
+
         Date.now().toString(36) +
+
         Math.random()
             .toString(36)
             .substring(2, 8)
+
     );
 }
 
 // ============================================================
-// GOOGLE SHEETS HELPERS
+// ENSURE GOOGLE SHEET HEADER
 // ============================================================
-
-const HEADERS = [
-    "id",
-    "date",
-    "time",
-    "direction",
-    "entryPrice",
-    "tp1Price",
-    "tp2Price",
-    "slPrice",
-    "result",
-    "pnl",
-    "createdAt"
-];
-
-// ------------------------------------------------------------
-// ENSURE SHEET HEADER
-// ------------------------------------------------------------
 
 async function ensureSheetHeader() {
 
     if (!sheets) {
+
         throw new Error(
             "Google Sheets belum terinisialisasi."
         );
     }
 
     const range =
-        `${SHEET_NAME}!A1:K1`;
+        `${SHEET_NAME}!A1:L1`;
 
     const response =
         await sheets.spreadsheets.values.get({
@@ -181,6 +210,10 @@ async function ensureSheetHeader() {
 
     const values =
         response.data.values || [];
+
+    // --------------------------------------------------------
+    // HEADER BELUM ADA
+    // --------------------------------------------------------
 
     if (
         values.length === 0 ||
@@ -213,11 +246,46 @@ async function ensureSheetHeader() {
     }
 
     // --------------------------------------------------------
-    // CEK HEADER
+    // HEADER LAMA 11 KOLOM
     // --------------------------------------------------------
 
     const existingHeaders =
         values[0];
+
+    if (
+        existingHeaders.length === 11 &&
+        existingHeaders[0] === "id"
+    ) {
+
+        await sheets.spreadsheets.values.update({
+
+            spreadsheetId:
+                GOOGLE_SHEET_ID,
+
+            range:
+                "JOURNAL!L1",
+
+            valueInputOption:
+                "RAW",
+
+            requestBody: {
+
+                values: [
+                    ["screenshotUrl"]
+                ]
+            }
+        });
+
+        console.log(
+            "✅ Kolom screenshotUrl ditambahkan."
+        );
+
+        return;
+    }
+
+    // --------------------------------------------------------
+    // CEK HEADER
+    // --------------------------------------------------------
 
     const headerMatch =
         HEADERS.every(
@@ -228,7 +296,7 @@ async function ensureSheetHeader() {
     if (!headerMatch) {
 
         console.warn(
-            "⚠️ Header JOURNAL berbeda dengan format yang diharapkan."
+            "⚠️ Header JOURNAL berbeda dari format yang diharapkan."
         );
 
         console.warn(
@@ -241,13 +309,14 @@ async function ensureSheetHeader() {
     }
 }
 
-// ------------------------------------------------------------
+// ============================================================
 // GET ALL SIGNALS
-// ------------------------------------------------------------
+// ============================================================
 
 async function getAllSignals() {
 
     if (!sheets) {
+
         throw new Error(
             "Google Sheets belum terhubung."
         );
@@ -262,13 +331,31 @@ async function getAllSignals() {
                 GOOGLE_SHEET_ID,
 
             range:
-                `${SHEET_NAME}!A2:K`
+                `${SHEET_NAME}!A2:L`
         });
 
     const rows =
         response.data.values || [];
 
     return rows.map(row => {
+
+        let numericPnl = 0;
+
+        if (
+            row[9] !== undefined &&
+            row[9] !== ""
+        ) {
+
+            numericPnl =
+                Number(row[9]);
+
+            if (
+                Number.isNaN(numericPnl)
+            ) {
+
+                numericPnl = 0;
+            }
+        }
 
         return {
 
@@ -300,22 +387,70 @@ async function getAllSignals() {
                 row[8] || "",
 
             pnl:
-                row[9] === undefined ||
-                row[9] === ""
-                    ? 0
-                    : Number(row[9]),
+                numericPnl,
 
             createdAt:
-                row[10] || ""
+                row[10] || "",
+
+            screenshotUrl:
+                row[11] || null
         };
     });
 }
 
-// ------------------------------------------------------------
-// GET ROW NUMBER BY SIGNAL ID
-// ------------------------------------------------------------
+// ============================================================
+// GET SIGNALS BY DATE
+// ============================================================
+
+async function getSignalsByDate(date) {
+
+    const signals =
+        await getAllSignals();
+
+    return signals.filter(
+        signal =>
+            signal.date === date
+    );
+}
+
+// ============================================================
+// GET DATES
+// ============================================================
+
+async function getAvailableDates() {
+
+    const signals =
+        await getAllSignals();
+
+    const dates =
+        new Set();
+
+    signals.forEach(signal => {
+
+        if (signal.date) {
+
+            dates.add(
+                signal.date
+            );
+        }
+    });
+
+    return Array.from(dates)
+        .sort();
+}
+
+// ============================================================
+// FIND SIGNAL ROW
+// ============================================================
 
 async function findSignalRow(id) {
+
+    if (!sheets) {
+
+        throw new Error(
+            "Google Sheets belum terhubung."
+        );
+    }
 
     const response =
         await sheets.spreadsheets.values.get({
@@ -342,12 +477,9 @@ async function findSignalRow(id) {
             );
 
         if (
-            rowId === String(id)
+            rowId ===
+            String(id)
         ) {
-
-            // +2 karena:
-            // row 1 = header
-            // array index 0 = row 2
 
             return i + 2;
         }
@@ -357,48 +489,94 @@ async function findSignalRow(id) {
 }
 
 // ============================================================
-// GET SIGNALS FOR DATE
+// FIND SCREENSHOT ROW
 // ============================================================
 
-async function getSignalsByDate(date) {
+async function findScreenshotRow(date) {
 
-    const signals =
-        await getAllSignals();
+    if (!sheets) {
 
-    return signals.filter(
-        signal =>
-            signal.date === date
-    );
-}
+        throw new Error(
+            "Google Sheets belum terhubung."
+        );
+    }
 
-// ============================================================
-// GET ALL DATES
-// ============================================================
+    const response =
+        await sheets.spreadsheets.values.get({
 
-async function getAvailableDates() {
+            spreadsheetId:
+                GOOGLE_SHEET_ID,
 
-    const signals =
-        await getAllSignals();
+            range:
+                `${SHEET_NAME}!B2:L`
+        });
 
-    const dates =
-        new Set();
+    const rows =
+        response.data.values || [];
 
-    signals.forEach(signal => {
+    for (
+        let i = 0;
+        i < rows.length;
+        i++
+    ) {
 
-        if (signal.date) {
-
-            dates.add(
-                signal.date
+        const rowDate =
+            String(
+                rows[i][0] || ""
             );
-        }
-    });
 
-    return Array.from(dates)
-        .sort();
+        const screenshotUrl =
+            String(
+                rows[i][10] || ""
+            );
+
+        if (
+            rowDate === String(date) &&
+            screenshotUrl
+        ) {
+
+            return i + 2;
+        }
+    }
+
+    return null;
 }
 
 // ============================================================
-// APP MIDDLEWARE
+// FIND SHEET ID
+// ============================================================
+
+async function getJournalSheetId() {
+
+    const metadata =
+        await sheets.spreadsheets.get({
+
+            spreadsheetId:
+                GOOGLE_SHEET_ID,
+
+            fields:
+                "sheets.properties"
+        });
+
+    const journalSheet =
+        metadata.data.sheets.find(
+            sheet =>
+                sheet.properties.title ===
+                SHEET_NAME
+        );
+
+    if (!journalSheet) {
+
+        throw new Error(
+            `Sheet "${SHEET_NAME}" tidak ditemukan.`
+        );
+    }
+
+    return journalSheet.properties.sheetId;
+}
+
+// ============================================================
+// EXPRESS JSON
 // ============================================================
 
 app.use(
@@ -439,13 +617,18 @@ app.use((req, res, next) => {
 });
 
 // ============================================================
-// STATIC FILES
+// STATIC
 // ============================================================
 
 app.use(
     express.static(PUBLIC_DIR, {
+
         index: false,
-        extensions: ["html"],
+
+        extensions: [
+            "html"
+        ],
+
         maxAge: "1h"
     })
 );
@@ -454,14 +637,21 @@ app.use(
 // ADMIN AUTH
 // ============================================================
 
-function requireAdmin(req, res, next) {
+function requireAdmin(
+    req,
+    res,
+    next
+) {
 
     const password =
-        req.headers["x-admin-password"];
+        req.headers[
+            "x-admin-password"
+        ];
 
     if (
         !password ||
-        password !== ADMIN_PASSWORD
+        password !==
+            ADMIN_PASSWORD
     ) {
 
         return res.status(401).json({
@@ -480,58 +670,77 @@ function requireAdmin(req, res, next) {
 // HEALTH
 // ============================================================
 
-app.get("/health", (req, res) => {
+app.get(
+    "/health",
+    (req, res) => {
 
-    res.status(200).json({
+        res.status(200).json({
 
-        status: "ok",
+            status: "ok",
 
-        service:
-            "AI Assistant Gold Journal",
+            service:
+                "AI Assistant Gold Journal",
 
-        timestamp:
-            new Date().toISOString(),
+            database:
+                "Google Sheets",
 
-        googleSheets:
-            Boolean(sheets)
-    });
-});
+            imageStorage:
+                "ImgBB",
+
+            googleSheets:
+                Boolean(sheets),
+
+            imgbb:
+                Boolean(IMGBB_API_KEY),
+
+            timestamp:
+                new Date().toISOString()
+        });
+    }
+);
 
 // ============================================================
 // API STATUS
 // ============================================================
 
-app.get("/api/status", (req, res) => {
+app.get(
+    "/api/status",
+    (req, res) => {
 
-    res.status(200).json({
+        res.status(200).json({
 
-        success: true,
+            success: true,
 
-        message:
-            "AI Assistant Gold Journal server is running",
+            message:
+                "AI Assistant Gold Journal server is running",
 
-        service:
-            "ai-assistant-gold-journal",
+            service:
+                "ai-assistant-gold-journal",
 
-        version:
-            "3.0.0",
+            version:
+                "4.0.0",
 
-        database:
-            "Google Sheets",
+            database:
+                "Google Sheets",
 
-        sheet:
-            SHEET_NAME,
+            imageStorage:
+                "ImgBB",
 
-        node:
-            process.version,
+            sheet:
+                SHEET_NAME,
 
-        environment:
-            process.env.NODE_ENV || "production",
+            node:
+                process.version,
 
-        timestamp:
-            new Date().toISOString()
-    });
-});
+            environment:
+                process.env.NODE_ENV ||
+                "production",
+
+            timestamp:
+                new Date().toISOString()
+        });
+    }
+);
 
 // ============================================================
 // ADMIN VERIFY
@@ -552,11 +761,13 @@ app.post(
         ) {
 
             return res.json({
+
                 ok: true
             });
         }
 
         return res.status(401).json({
+
             ok: false
         });
     }
@@ -580,13 +791,11 @@ app.get(
                     date
                 );
 
-            /*
-             * Screenshot sementara null.
-             *
-             * Nanti screenshot akan kita
-             * pindahkan ke Google Drive agar
-             * juga permanen setelah Railway restart.
-             */
+            const screenshotSignal =
+                signals.find(
+                    signal =>
+                        signal.screenshotUrl
+                );
 
             return res.json({
 
@@ -594,15 +803,19 @@ app.get(
 
                 signals,
 
-                screenshot: null
+                screenshot:
+                    screenshotSignal
+                        ? screenshotSignal.screenshotUrl
+                        : null
             });
 
         } catch (error) {
 
             console.error(
-                "❌ GET DAY ERROR:",
-                error
+                "❌ GET DAY ERROR:"
             );
+
+            console.error(error);
 
             return res.status(500).json({
 
@@ -616,7 +829,7 @@ app.get(
 );
 
 // ============================================================
-// GET LATEST DATE
+// GET LATEST
 // ============================================================
 
 app.get(
@@ -628,9 +841,12 @@ app.get(
             const dates =
                 await getAvailableDates();
 
-            if (!dates.length) {
+            if (
+                !dates.length
+            ) {
 
                 return res.json({
+
                     date: null
                 });
             }
@@ -638,15 +854,18 @@ app.get(
             return res.json({
 
                 date:
-                    dates[dates.length - 1]
+                    dates[
+                        dates.length - 1
+                    ]
             });
 
         } catch (error) {
 
             console.error(
-                "❌ GET LATEST ERROR:",
-                error
+                "❌ GET LATEST ERROR:"
             );
+
+            console.error(error);
 
             return res.status(500).json({
 
@@ -678,39 +897,62 @@ app.get(
             const result = {};
 
             signals
-                .filter(signal =>
-                    signal.date &&
-                    signal.date.startsWith(
-                        month
-                    )
+                .filter(
+                    signal =>
+                        signal.date &&
+                        signal.date.startsWith(
+                            month
+                        )
                 )
-                .forEach(signal => {
+                .forEach(
+                    signal => {
 
-                    if (
-                        !result[signal.date]
-                    ) {
+                        if (
+                            !result[
+                                signal.date
+                            ]
+                        ) {
 
-                        result[signal.date] = {
+                            result[
+                                signal.date
+                            ] = {
 
-                            signals: [],
+                                signals: [],
 
-                            screenshot: null
-                        };
+                                screenshot:
+                                    null
+                            };
+                        }
+
+                        result[
+                            signal.date
+                        ].signals.push(
+                            signal
+                        );
+
+                        if (
+                            signal.screenshotUrl
+                        ) {
+
+                            result[
+                                signal.date
+                            ].screenshot =
+                                signal.screenshotUrl;
+                        }
                     }
+                );
 
-                    result[
-                        signal.date
-                    ].signals.push(signal);
-                });
-
-            return res.json(result);
+            return res.json(
+                result
+            );
 
         } catch (error) {
 
             console.error(
-                "❌ GET MONTH ERROR:",
-                error
+                "❌ GET MONTH ERROR:"
             );
+
+            console.error(error);
 
             return res.status(500).json({
 
@@ -784,15 +1026,22 @@ app.post(
             }
 
             const allowedDirections = [
+
                 "BUY",
+
                 "SELL"
             ];
 
             const allowedResults = [
+
                 "TP1",
+
                 "TP2",
+
                 "SL",
+
                 "PENDING",
+
                 "NO SIGNAL"
             ];
 
@@ -837,10 +1086,14 @@ app.post(
                     generateId(),
 
                 date:
-                    String(date).trim(),
+                    String(
+                        date
+                    ).trim(),
 
                 time:
-                    String(time).trim(),
+                    String(
+                        time
+                    ).trim(),
 
                 direction:
                     direction === "SELL"
@@ -849,26 +1102,36 @@ app.post(
 
                 entryPrice:
                     entryPrice
-                        ? String(entryPrice).trim()
+                        ? String(
+                            entryPrice
+                        ).trim()
                         : "",
 
                 tp1Price:
                     tp1Price
-                        ? String(tp1Price).trim()
+                        ? String(
+                            tp1Price
+                        ).trim()
                         : "",
 
                 tp2Price:
                     tp2Price
-                        ? String(tp2Price).trim()
+                        ? String(
+                            tp2Price
+                        ).trim()
                         : "",
 
                 slPrice:
                     slPrice
-                        ? String(slPrice).trim()
+                        ? String(
+                            slPrice
+                        ).trim()
                         : "",
 
                 result:
-                    String(result).trim(),
+                    String(
+                        result
+                    ).trim(),
 
                 pnl:
                     pnl === "" ||
@@ -878,7 +1141,11 @@ app.post(
                         : Number(pnl),
 
                 createdAt:
-                    new Date().toISOString()
+                    new Date()
+                        .toISOString(),
+
+                screenshotUrl:
+                    null
             };
 
             if (
@@ -900,7 +1167,7 @@ app.post(
                     GOOGLE_SHEET_ID,
 
                 range:
-                    `${SHEET_NAME}!A:K`,
+                    `${SHEET_NAME}!A:L`,
 
                 valueInputOption:
                     "RAW",
@@ -932,8 +1199,9 @@ app.post(
 
                         signal.pnl,
 
-                        signal.createdAt
+                        signal.createdAt,
 
+                        ""
                     ]]
                 }
             });
@@ -983,7 +1251,9 @@ app.delete(
                 req.params.id;
 
             const rowNumber =
-                await findSignalRow(id);
+                await findSignalRow(
+                    id
+                );
 
             if (!rowNumber) {
 
@@ -996,40 +1266,8 @@ app.delete(
                 });
             }
 
-            // ------------------------------------------------
-            // DELETE ROW
-            // ------------------------------------------------
-
-            const metadata =
-                await sheets.spreadsheets.get({
-
-                    spreadsheetId:
-                        GOOGLE_SHEET_ID,
-
-                    fields:
-                        "sheets.properties"
-                });
-
-            const journalSheet =
-                metadata.data.sheets.find(
-                    sheet =>
-                        sheet.properties.title ===
-                        SHEET_NAME
-                );
-
-            if (!journalSheet) {
-
-                return res.status(500).json({
-
-                    success: false,
-
-                    error:
-                        "Sheet JOURNAL tidak ditemukan."
-                });
-            }
-
             const sheetId =
-                journalSheet.properties.sheetId;
+                await getJournalSheetId();
 
             await sheets.spreadsheets.batchUpdate({
 
@@ -1089,6 +1327,185 @@ app.delete(
 );
 
 // ============================================================
+// IMGBB UPLOAD HELPER
+// ============================================================
+
+function uploadToImgBB(base64Image) {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            if (
+                !IMGBB_API_KEY
+            ) {
+
+                return reject(
+                    new Error(
+                        "IMGBB_API_KEY belum tersedia."
+                    )
+                );
+            }
+
+            if (
+                typeof base64Image !==
+                "string"
+            ) {
+
+                return reject(
+                    new Error(
+                        "Data gambar tidak valid."
+                    )
+                );
+            }
+
+            // ------------------------------------------------
+            // HANYA AMBIL BASE64
+            // ------------------------------------------------
+
+            let imageData =
+                base64Image;
+
+            if (
+                imageData.includes(",")
+            ) {
+
+                imageData =
+                    imageData.split(
+                        ","
+                    )[1];
+            }
+
+            // ------------------------------------------------
+            // URL IMGBB
+            // ------------------------------------------------
+
+            const postData =
+                new URLSearchParams({
+
+                    key:
+                        IMGBB_API_KEY,
+
+                    image:
+                        imageData
+
+                }).toString();
+
+            const options = {
+
+                hostname:
+                    "api.imgbb.com",
+
+                path:
+                    "/1/upload",
+
+                method:
+                    "POST",
+
+                headers: {
+
+                    "Content-Type":
+                        "application/x-www-form-urlencoded",
+
+                    "Content-Length":
+                        Buffer.byteLength(
+                            postData
+                        )
+                }
+            };
+
+            const request =
+                https.request(
+                    options,
+                    response => {
+
+                        let body = "";
+
+                        response.on(
+                            "data",
+                            chunk => {
+
+                                body +=
+                                    chunk;
+                            }
+                        );
+
+                        response.on(
+                            "end",
+                            () => {
+
+                                try {
+
+                                    const result =
+                                        JSON.parse(
+                                            body
+                                        );
+
+                                    if (
+                                        !result.success ||
+                                        !result.data
+                                    ) {
+
+                                        return reject(
+                                            new Error(
+                                                result.error
+                                                    ?.message ||
+                                                "Upload ImgBB gagal."
+                                            )
+                                        );
+                                    }
+
+                                    const imageUrl =
+                                        result.data.display_url ||
+                                        result.data.url;
+
+                                    if (
+                                        !imageUrl
+                                    ) {
+
+                                        return reject(
+                                            new Error(
+                                                "ImgBB tidak mengembalikan URL gambar."
+                                            )
+                                        );
+                                    }
+
+                                    resolve(
+                                        imageUrl
+                                    );
+
+                                } catch (
+                                    error
+                                ) {
+
+                                    reject(
+                                        error
+                                    );
+                                }
+                            }
+                        );
+                    }
+                );
+
+            request.on(
+                "error",
+                error => {
+
+                    reject(
+                        error
+                    );
+                }
+            );
+
+            request.write(
+                postData
+            );
+
+            request.end();
+        }
+    );
+}
+
+// ============================================================
 // SAVE SCREENSHOT
 // ============================================================
 
@@ -1097,54 +1514,215 @@ app.post(
     requireAdmin,
     async (req, res) => {
 
-        /*
-         * BELUM dipindahkan ke Google Drive.
-         *
-         * Google Sheets mempunyai batas ukuran cell,
-         * sehingga Base64 screenshot tidak aman disimpan
-         * langsung ke JOURNAL.
-         *
-         * Endpoint tetap dipertahankan agar API website
-         * tidak hilang.
-         */
+        try {
 
-        const screenshot =
-            req.body.screenshot;
+            const date =
+                req.params.date;
 
-        if (!screenshot) {
+            const screenshot =
+                req.body.screenshot;
 
-            return res.status(400).json({
+            // ------------------------------------------------
+            // VALIDATION
+            // ------------------------------------------------
+
+            if (!screenshot) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Screenshot belum dipilih."
+                });
+            }
+
+            if (
+                typeof screenshot !==
+                    "string" ||
+                !screenshot.startsWith(
+                    "data:image/"
+                )
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Format screenshot tidak valid."
+                });
+            }
+
+            if (
+                !IMGBB_API_KEY
+            ) {
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    error:
+                        "IMGBB_API_KEY belum dikonfigurasi di Railway."
+                });
+            }
+
+            // ------------------------------------------------
+            // UPLOAD KE IMGBB
+            // ------------------------------------------------
+
+            console.log(
+                `📤 Upload screenshot ke ImgBB: ${date}`
+            );
+
+            const imageUrl =
+                await uploadToImgBB(
+                    screenshot
+                );
+
+            console.log(
+                "✅ ImgBB upload berhasil:"
+            );
+
+            console.log(
+                imageUrl
+            );
+
+            // ------------------------------------------------
+            // CARI SIGNAL PADA TANGGAL TERSEBUT
+            // ------------------------------------------------
+
+            const signals =
+                await getSignalsByDate(
+                    date
+                );
+
+            // ------------------------------------------------
+            // JIKA ADA SIGNAL
+            // SIMPAN URL PADA SIGNAL PERTAMA
+            // ------------------------------------------------
+
+            if (
+                signals.length > 0
+            ) {
+
+                const firstSignal =
+                    signals[0];
+
+                const rowNumber =
+                    await findSignalRow(
+                        firstSignal.id
+                    );
+
+                if (
+                    rowNumber
+                ) {
+
+                    await sheets.spreadsheets.values.update({
+
+                        spreadsheetId:
+                            GOOGLE_SHEET_ID,
+
+                        range:
+                            `${SHEET_NAME}!L${rowNumber}`,
+
+                        valueInputOption:
+                            "RAW",
+
+                        requestBody: {
+
+                            values: [[
+                                imageUrl
+                            ]]
+                        }
+                    });
+                }
+
+            } else {
+
+                /*
+                 * Jika hari tersebut belum memiliki signal,
+                 * kita buat satu baris khusus screenshot.
+                 *
+                 * Direction dan result dikosongkan.
+                 */
+
+                await sheets.spreadsheets.values.append({
+
+                    spreadsheetId:
+                        GOOGLE_SHEET_ID,
+
+                    range:
+                        `${SHEET_NAME}!A:L`,
+
+                    valueInputOption:
+                        "RAW",
+
+                    insertDataOption:
+                        "INSERT_ROWS",
+
+                    requestBody: {
+
+                        values: [[
+
+                            generateId(),
+
+                            date,
+
+                            "",
+
+                            "",
+
+                            "",
+
+                            "",
+
+                            "",
+
+                            "",
+
+                            "",
+
+                            0,
+
+                            new Date()
+                                .toISOString(),
+
+                            imageUrl
+
+                        ]]
+                    }
+                });
+            }
+
+            return res.json({
+
+                success: true,
+
+                screenshot:
+                    imageUrl,
+
+                url:
+                    imageUrl
+            });
+
+        } catch (error) {
+
+            console.error(
+                "❌ SCREENSHOT ERROR:"
+            );
+
+            console.error(error);
+
+            return res.status(500).json({
 
                 success: false,
 
                 error:
-                    "Screenshot belum dipilih."
+                    error.message ||
+                    "Gagal menyimpan screenshot."
             });
         }
-
-        if (
-            typeof screenshot !== "string" ||
-            !screenshot.startsWith(
-                "data:image/"
-            )
-        ) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                error:
-                    "Format screenshot tidak valid."
-            });
-        }
-
-        return res.status(501).json({
-
-            success: false,
-
-            error:
-                "Penyimpanan screenshot permanen sedang menunggu konfigurasi Google Drive."
-        });
     }
 );
 
@@ -1152,98 +1730,122 @@ app.post(
 // HOME
 // ============================================================
 
-app.get("/", (req, res) => {
+app.get(
+    "/",
+    (req, res) => {
 
-    const indexPath =
-        path.join(
-            ROOT_DIR,
-            "index.html"
-        );
+        const indexPath =
+            path.join(
+                ROOT_DIR,
+                "index.html"
+            );
 
-    res.sendFile(
-        indexPath,
-        error => {
+        res.sendFile(
+            indexPath,
+            error => {
 
-            if (error) {
+                if (error) {
 
-                console.error(
-                    "❌ Gagal mengirim index.html:"
-                );
-
-                console.error(error);
-
-                if (!res.headersSent) {
-
-                    res.status(500).send(
-                        "index.html tidak ditemukan."
+                    console.error(
+                        "❌ Gagal mengirim index.html:"
                     );
+
+                    console.error(
+                        error
+                    );
+
+                    if (
+                        !res.headersSent
+                    ) {
+
+                        res.status(
+                            500
+                        ).send(
+                            "index.html tidak ditemukan."
+                        );
+                    }
                 }
             }
-        }
-    );
-});
+        );
+    }
+);
 
 // ============================================================
 // SPA FALLBACK
 // ============================================================
 
-app.get("*", (req, res, next) => {
+app.get(
+    "*",
+    (req, res, next) => {
 
-    if (
-        req.path.startsWith("/api/")
-    ) {
+        if (
+            req.path.startsWith(
+                "/api/"
+            )
+        ) {
 
-        return next();
-    }
-
-    if (
-        path.extname(req.path)
-    ) {
-
-        return next();
-    }
-
-    const indexPath =
-        path.join(
-            ROOT_DIR,
-            "index.html"
-        );
-
-    res.sendFile(
-        indexPath,
-        error => {
-
-            if (error) {
-
-                next(error);
-            }
+            return next();
         }
-    );
-});
+
+        if (
+            path.extname(
+                req.path
+            )
+        ) {
+
+            return next();
+        }
+
+        const indexPath =
+            path.join(
+                ROOT_DIR,
+                "index.html"
+            );
+
+        res.sendFile(
+            indexPath,
+            error => {
+
+                if (error) {
+
+                    next(error);
+                }
+            }
+        );
+    }
+);
 
 // ============================================================
 // 404
 // ============================================================
 
-app.use((req, res) => {
+app.use(
+    (req, res) => {
 
-    if (
-        req.path.startsWith("/api/")
-    ) {
+        if (
+            req.path.startsWith(
+                "/api/"
+            )
+        ) {
 
-        return res.status(404).json({
+            return res.status(
+                404
+            ).json({
 
-            success: false,
+                success: false,
 
-            error:
-                "API endpoint tidak ditemukan",
+                error:
+                    "API endpoint tidak ditemukan",
 
-            path:
-                req.path
-        });
-    }
+                path:
+                    req.path
+            });
+        }
 
-    res.status(404).send(`
+        res.status(
+            404
+        ).send(`
+
 <!DOCTYPE html>
 
 <html lang="id">
@@ -1269,7 +1871,9 @@ padding:80px 20px;
 
 <h1>404</h1>
 
-<p>Halaman tidak ditemukan.</p>
+<p>
+Halaman tidak ditemukan.
+</p>
 
 <a href="/" style="
 color:white;
@@ -1282,48 +1886,67 @@ Kembali ke Dashboard
 </body>
 
 </html>
+
 `);
-});
+    }
+);
 
 // ============================================================
 // ERROR HANDLER
 // ============================================================
 
-app.use((err, req, res, next) => {
+app.use(
+    (
+        err,
+        req,
+        res,
+        next
+    ) => {
 
-    console.error(
-        "=============================================="
-    );
+        console.error(
+            "=============================================="
+        );
 
-    console.error(
-        "❌ EXPRESS SERVER ERROR"
-    );
+        console.error(
+            "❌ EXPRESS SERVER ERROR"
+        );
 
-    console.error(
-        "=============================================="
-    );
+        console.error(
+            "=============================================="
+        );
 
-    console.error(err);
+        console.error(
+            err
+        );
 
-    if (res.headersSent) {
+        if (
+            res.headersSent
+        ) {
 
-        return next(err);
-    }
+            return next(err);
+        }
 
-    if (
-        req.path.startsWith("/api/")
-    ) {
+        if (
+            req.path.startsWith(
+                "/api/"
+            )
+        ) {
 
-        return res.status(500).json({
+            return res.status(
+                500
+            ).json({
 
-            success: false,
+                success: false,
 
-            error:
-                "Internal Server Error"
-        });
-    }
+                error:
+                    "Internal Server Error"
+            });
+        }
 
-    res.status(500).send(`
+        res.status(
+            500
+        ).send(`
+
 <!DOCTYPE html>
 
 <html lang="id">
@@ -1357,8 +1980,10 @@ Kembali
 </body>
 
 </html>
+
 `);
-});
+    }
+);
 
 // ============================================================
 // INITIALIZE GOOGLE SHEETS
@@ -1399,7 +2024,7 @@ const server =
             );
 
             console.log(
-                `💾 Data   : GOOGLE SHEETS`
+                "💾 Data   : GOOGLE SHEETS"
             );
 
             console.log(
@@ -1407,11 +2032,15 @@ const server =
             );
 
             console.log(
-                `🟢 Health : /health`
+                "🖼️ Image  : ImgBB"
             );
 
             console.log(
-                `🔵 API    : /api/status`
+                "🟢 Health : /health"
+            );
+
+            console.log(
+                "🔵 API    : /api/status"
             );
 
             console.log(
@@ -1423,10 +2052,12 @@ const server =
             );
 
             // ------------------------------------------------
-            // CHECK GOOGLE SHEETS
+            // GOOGLE SHEETS TEST
             // ------------------------------------------------
 
-            if (sheets) {
+            if (
+                sheets
+            ) {
 
                 try {
 
@@ -1436,19 +2067,42 @@ const server =
                         "✅ GOOGLE SHEETS TERHUBUNG"
                     );
 
-                } catch (error) {
+                } catch (
+                    error
+                ) {
 
                     console.error(
                         "❌ GOOGLE SHEETS TIDAK BISA DIAKSES"
                     );
 
-                    console.error(error);
+                    console.error(
+                        error.message
+                    );
                 }
 
             } else {
 
                 console.error(
                     "❌ GOOGLE SHEETS BELUM TERKONFIGURASI"
+                );
+            }
+
+            // ------------------------------------------------
+            // IMGBB TEST
+            // ------------------------------------------------
+
+            if (
+                IMGBB_API_KEY
+            ) {
+
+                console.log(
+                    "✅ IMGBB API KEY TERDETEKSI"
+                );
+
+            } else {
+
+                console.error(
+                    "❌ IMGBB_API_KEY BELUM TERKONFIGURASI"
                 );
             }
 
@@ -1480,7 +2134,9 @@ server.on(
             "❌ SERVER ERROR"
         );
 
-        console.error(error);
+        console.error(
+            error
+        );
     }
 );
 
@@ -1488,7 +2144,9 @@ server.on(
 // GRACEFUL SHUTDOWN
 // ============================================================
 
-function shutdown(signal) {
+function shutdown(
+    signal
+) {
 
     console.log(
         `⚠️ ${signal} diterima.`
@@ -1498,24 +2156,34 @@ function shutdown(signal) {
         "🛑 Menghentikan server..."
     );
 
-    server.close(() => {
+    server.close(
+        () => {
 
-        console.log(
-            "✅ Server berhasil dihentikan."
-        );
+            console.log(
+                "✅ Server berhasil dihentikan."
+            );
 
-        process.exit(0);
-    });
+            process.exit(
+                0
+            );
+        }
+    );
 }
 
 process.on(
     "SIGTERM",
-    () => shutdown("SIGTERM")
+    () =>
+        shutdown(
+            "SIGTERM"
+        )
 );
 
 process.on(
     "SIGINT",
-    () => shutdown("SIGINT")
+    () =>
+        shutdown(
+            "SIGINT"
+        )
 );
 
 // ============================================================
@@ -1530,7 +2198,9 @@ process.on(
             "❌ UNCAUGHT EXCEPTION"
         );
 
-        console.error(error);
+        console.error(
+            error
+        );
     }
 );
 
@@ -1542,6 +2212,8 @@ process.on(
             "❌ UNHANDLED PROMISE REJECTION"
         );
 
-        console.error(reason);
+        console.error(
+            reason
+        );
     }
 );
