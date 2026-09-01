@@ -1,22 +1,21 @@
 // ============================================================
 // AI ASSISTANT GOLD JOURNAL
 // server.js
-// GOOGLE SHEETS + IMGBB VERSION
-// VERSION 4.2.0
+// GOOGLE SHEETS VERSION (TANPA SCREENSHOT)
+// VERSION 5.0.0
 //
-// PERBAIKAN:
-// 1. DATE SEPARATOR DIHAPUS
-// 2. ENTRY -> KOLOM E
-// 3. TP1   -> KOLOM F
-// 4. TP2   -> KOLOM G
-// 5. SL    -> KOLOM H
-// 6. Harga TP1 tidak lagi disamakan dengan Entry
-// 7. Public API membaca harga dari kolom yang benar
+// PERBAIKAN DARI VERSI SEBELUMNYA:
+// 1. Field harga hasil (TP1/TP2/SL) yang dikirim frontend
+//    sebagai "resultPrice" sekarang benar-benar dipetakan
+//    ke kolom F/G/H sesuai nilai "result".
+// 2. Response API sekarang menyertakan field turunan
+//    "resultPrice" agar frontend bisa langsung menampilkannya.
+// 3. Seluruh fitur screenshot (ImgBB, endpoint upload,
+//    kolom screenshotUrl) DIHAPUS.
 // ============================================================
 
 const express = require("express");
 const path = require("path");
-const https = require("https");
 const { google } = require("googleapis");
 
 // ============================================================
@@ -46,13 +45,6 @@ const GOOGLE_PRIVATE_KEY =
         : null;
 
 const SHEET_NAME = "JOURNAL";
-
-// ============================================================
-// IMGBB CONFIG
-// ============================================================
-
-const IMGBB_API_KEY =
-    process.env.IMGBB_API_KEY;
 
 // ============================================================
 // ADMIN PASSWORD
@@ -87,17 +79,9 @@ function initializeGoogleSheets() {
             "Pastikan Environment Variables memiliki:"
         );
 
-        console.error(
-            "GOOGLE_SHEET_ID"
-        );
-
-        console.error(
-            "GOOGLE_CLIENT_EMAIL"
-        );
-
-        console.error(
-            "GOOGLE_PRIVATE_KEY"
-        );
+        console.error("GOOGLE_SHEET_ID");
+        console.error("GOOGLE_CLIENT_EMAIL");
+        console.error("GOOGLE_PRIVATE_KEY");
 
         return false;
     }
@@ -108,12 +92,8 @@ function initializeGoogleSheets() {
             new google.auth.GoogleAuth({
 
                 credentials: {
-
-                    client_email:
-                        GOOGLE_CLIENT_EMAIL,
-
-                    private_key:
-                        GOOGLE_PRIVATE_KEY
+                    client_email: GOOGLE_CLIENT_EMAIL,
+                    private_key: GOOGLE_PRIVATE_KEY
                 },
 
                 scopes: [
@@ -147,34 +127,30 @@ function initializeGoogleSheets() {
 
 // ============================================================
 // HEADERS GOOGLE SHEETS
+//
+// A id | B date | C time | D direction | E entryPrice
+// F tp1Price | G tp2Price | H slPrice | I result | J pnl
+// K createdAt
 // ============================================================
 
 const HEADERS = [
-
     "id",
-
     "date",
-
     "time",
-
     "direction",
-
     "entryPrice",
-
     "tp1Price",
-
     "tp2Price",
-
     "slPrice",
-
     "result",
-
     "pnl",
-
-    "createdAt",
-
-    "screenshotUrl"
+    "createdAt"
 ];
+
+const SHEET_RANGE_FULL = `${SHEET_NAME}!A:K`;
+const SHEET_RANGE_HEADER = `${SHEET_NAME}!A1:K1`;
+const SHEET_RANGE_DATA = `${SHEET_NAME}!A2:K`;
+const SHEET_RANGE_ID_COLUMN = `${SHEET_NAME}!A2:A`;
 
 // ============================================================
 // ID GENERATOR
@@ -183,13 +159,8 @@ const HEADERS = [
 function generateId() {
 
     return (
-
         Date.now().toString(36) +
-
-        Math.random()
-            .toString(36)
-            .substring(2, 8)
-
+        Math.random().toString(36).substring(2, 8)
     );
 }
 
@@ -199,19 +170,13 @@ function generateId() {
 
 function cleanPrice(value) {
 
-    if (
-        value === undefined ||
-        value === null
-    ) {
-
+    if (value === undefined || value === null) {
         return "";
     }
 
-    const valueString =
-        String(value).trim();
+    const valueString = String(value).trim();
 
     if (!valueString) {
-
         return "";
     }
 
@@ -225,107 +190,38 @@ function cleanPrice(value) {
 async function ensureSheetHeader() {
 
     if (!sheets) {
-
-        throw new Error(
-            "Google Sheets belum terinisialisasi."
-        );
+        throw new Error("Google Sheets belum terinisialisasi.");
     }
-
-    const range =
-        `${SHEET_NAME}!A1:L1`;
 
     const response =
         await sheets.spreadsheets.values.get({
-
-            spreadsheetId:
-                GOOGLE_SHEET_ID,
-
-            range
+            spreadsheetId: GOOGLE_SHEET_ID,
+            range: SHEET_RANGE_HEADER
         });
 
-    const values =
-        response.data.values || [];
+    const values = response.data.values || [];
 
-    // --------------------------------------------------------
-    // HEADER BELUM ADA
-    // --------------------------------------------------------
-
-    if (
-        values.length === 0 ||
-        values[0].length === 0
-    ) {
+    if (values.length === 0 || values[0].length === 0) {
 
         await sheets.spreadsheets.values.update({
-
-            spreadsheetId:
-                GOOGLE_SHEET_ID,
-
-            range,
-
-            valueInputOption:
-                "RAW",
-
+            spreadsheetId: GOOGLE_SHEET_ID,
+            range: SHEET_RANGE_HEADER,
+            valueInputOption: "RAW",
             requestBody: {
-
-                values: [
-                    HEADERS
-                ]
+                values: [HEADERS]
             }
         });
 
-        console.log(
-            "✅ Header JOURNAL berhasil dibuat."
-        );
+        console.log("✅ Header JOURNAL berhasil dibuat.");
 
         return;
     }
 
-    // --------------------------------------------------------
-    // HEADER LAMA 11 KOLOM
-    // --------------------------------------------------------
-
-    const existingHeaders =
-        values[0];
-
-    if (
-        existingHeaders.length === 11 &&
-        existingHeaders[0] === "id"
-    ) {
-
-        await sheets.spreadsheets.values.update({
-
-            spreadsheetId:
-                GOOGLE_SHEET_ID,
-
-            range:
-                `${SHEET_NAME}!L1`,
-
-            valueInputOption:
-                "RAW",
-
-            requestBody: {
-
-                values: [
-                    ["screenshotUrl"]
-                ]
-            }
-        });
-
-        console.log(
-            "✅ Kolom screenshotUrl ditambahkan."
-        );
-
-        return;
-    }
-
-    // --------------------------------------------------------
-    // CEK HEADER
-    // --------------------------------------------------------
+    const existingHeaders = values[0];
 
     const headerMatch =
         HEADERS.every(
-            (header, index) =>
-                existingHeaders[index] === header
+            (header, index) => existingHeaders[index] === header
         );
 
     if (!headerMatch) {
@@ -334,14 +230,29 @@ async function ensureSheetHeader() {
             "⚠️ Header JOURNAL berbeda dari format yang diharapkan."
         );
 
-        console.warn(
-            "Header yang diharapkan:"
-        );
+        console.warn("Header yang diharapkan:");
 
-        console.warn(
-            HEADERS
-        );
+        console.warn(HEADERS);
     }
+}
+
+// ============================================================
+// HITUNG HARGA HASIL (resultPrice) DARI KOLOM TP1/TP2/SL
+// ============================================================
+
+function computeResultPrice(row) {
+
+    const result = row.result;
+
+    if (result === "TP1") return row.tp1Price;
+    if (result === "TP2") return row.tp2Price;
+    if (result === "SL") return row.slPrice;
+
+    // Untuk PENDING, harga yang relevan adalah harga entry
+    // (belum ada kolom terpisah untuk harga pending).
+    if (result === "PENDING") return row.entryPrice;
+
+    return "";
 }
 
 // ============================================================
@@ -351,58 +262,26 @@ async function ensureSheetHeader() {
 async function getAllSignals() {
 
     if (!sheets) {
-
-        throw new Error(
-            "Google Sheets belum terhubung."
-        );
+        throw new Error("Google Sheets belum terhubung.");
     }
 
     await ensureSheetHeader();
 
     const response =
         await sheets.spreadsheets.values.get({
-
-            spreadsheetId:
-                GOOGLE_SHEET_ID,
-
-            range:
-                `${SHEET_NAME}!A2:L`
+            spreadsheetId: GOOGLE_SHEET_ID,
+            range: SHEET_RANGE_DATA
         });
 
-    const rows =
-        response.data.values || [];
+    const rows = response.data.values || [];
 
     return rows
 
-        // ----------------------------------------------------
-        // HANYA AMBIL ROW SIGNAL
-        // ----------------------------------------------------
-
         .filter(row => {
 
-            const id =
-                String(
-                    row[0] || ""
-                ).trim();
+            const id = String(row[0] || "").trim();
 
-            // Abaikan baris kosong
             if (!id) {
-                return false;
-            }
-
-            // Abaikan separator lama jika masih
-            // tersisa di Google Sheet
-            if (
-                id === "DATE_SEPARATOR"
-            ) {
-                return false;
-            }
-
-            // Abaikan separator lama yang sudah
-            // berubah menjadi ===== tanggal =====
-            if (
-                id.startsWith("=====")
-            ) {
                 return false;
             }
 
@@ -413,72 +292,46 @@ async function getAllSignals() {
 
             let numericPnl = 0;
 
-            if (
-                row[9] !== undefined &&
-                row[9] !== ""
-            ) {
+            if (row[9] !== undefined && row[9] !== "") {
 
-                numericPnl =
-                    Number(row[9]);
+                numericPnl = Number(row[9]);
 
-                if (
-                    Number.isNaN(numericPnl)
-                ) {
-
+                if (Number.isNaN(numericPnl)) {
                     numericPnl = 0;
                 }
             }
 
-            return {
+            const signal = {
 
-                id:
-                    row[0] || "",
-
-                date:
-                    row[1] || "",
-
-                time:
-                    row[2] || "",
-
-                direction:
-                    row[3] || "BUY",
+                id: row[0] || "",
+                date: row[1] || "",
+                time: row[2] || "",
+                direction: row[3] || "BUY",
 
                 // E
-                entryPrice:
-                    cleanPrice(
-                        row[4]
-                    ),
+                entryPrice: cleanPrice(row[4]),
 
                 // F
-                tp1Price:
-                    cleanPrice(
-                        row[5]
-                    ),
+                tp1Price: cleanPrice(row[5]),
 
                 // G
-                tp2Price:
-                    cleanPrice(
-                        row[6]
-                    ),
+                tp2Price: cleanPrice(row[6]),
 
                 // H
-                slPrice:
-                    cleanPrice(
-                        row[7]
-                    ),
+                slPrice: cleanPrice(row[7]),
 
-                result:
-                    row[8] || "",
+                result: row[8] || "",
 
-                pnl:
-                    numericPnl,
+                pnl: numericPnl,
 
-                createdAt:
-                    row[10] || "",
-
-                screenshotUrl:
-                    row[11] || null
+                createdAt: row[10] || ""
             };
+
+            // Field turunan agar frontend tinggal pakai
+            // satu nama field untuk "harga hasil".
+            signal.resultPrice = computeResultPrice(signal);
+
+            return signal;
         });
 }
 
@@ -488,13 +341,11 @@ async function getAllSignals() {
 
 async function getSignalsByDate(date) {
 
-    const signals =
-        await getAllSignals();
+    const signals = await getAllSignals();
 
     return signals.filter(
         signal =>
-            String(signal.date).trim() ===
-            String(date).trim()
+            String(signal.date).trim() === String(date).trim()
     );
 }
 
@@ -504,24 +355,18 @@ async function getSignalsByDate(date) {
 
 async function getAvailableDates() {
 
-    const signals =
-        await getAllSignals();
+    const signals = await getAllSignals();
 
-    const dates =
-        new Set();
+    const dates = new Set();
 
     signals.forEach(signal => {
 
         if (signal.date) {
-
-            dates.add(
-                String(signal.date).trim()
-            );
+            dates.add(String(signal.date).trim());
         }
     });
 
-    return Array.from(dates)
-        .sort();
+    return Array.from(dates).sort();
 }
 
 // ============================================================
@@ -531,96 +376,22 @@ async function getAvailableDates() {
 async function findSignalRow(id) {
 
     if (!sheets) {
-
-        throw new Error(
-            "Google Sheets belum terhubung."
-        );
+        throw new Error("Google Sheets belum terhubung.");
     }
 
     const response =
         await sheets.spreadsheets.values.get({
-
-            spreadsheetId:
-                GOOGLE_SHEET_ID,
-
-            range:
-                `${SHEET_NAME}!A2:A`
+            spreadsheetId: GOOGLE_SHEET_ID,
+            range: SHEET_RANGE_ID_COLUMN
         });
 
-    const rows =
-        response.data.values || [];
+    const rows = response.data.values || [];
 
-    for (
-        let i = 0;
-        i < rows.length;
-        i++
-    ) {
+    for (let i = 0; i < rows.length; i++) {
 
-        const rowId =
-            String(
-                rows[i][0] || ""
-            ).trim();
+        const rowId = String(rows[i][0] || "").trim();
 
-        if (
-            rowId ===
-            String(id).trim()
-        ) {
-
-            return i + 2;
-        }
-    }
-
-    return null;
-}
-
-// ============================================================
-// FIND SCREENSHOT ROW
-// ============================================================
-
-async function findScreenshotRow(date) {
-
-    if (!sheets) {
-
-        throw new Error(
-            "Google Sheets belum terhubung."
-        );
-    }
-
-    const response =
-        await sheets.spreadsheets.values.get({
-
-            spreadsheetId:
-                GOOGLE_SHEET_ID,
-
-            range:
-                `${SHEET_NAME}!B2:L`
-        });
-
-    const rows =
-        response.data.values || [];
-
-    for (
-        let i = 0;
-        i < rows.length;
-        i++
-    ) {
-
-        const rowDate =
-            String(
-                rows[i][0] || ""
-            ).trim();
-
-        const screenshotUrl =
-            String(
-                rows[i][10] || ""
-            ).trim();
-
-        if (
-            rowDate ===
-                String(date).trim() &&
-            screenshotUrl
-        ) {
-
+        if (rowId === String(id).trim()) {
             return i + 2;
         }
     }
@@ -636,26 +407,17 @@ async function getJournalSheetId() {
 
     const metadata =
         await sheets.spreadsheets.get({
-
-            spreadsheetId:
-                GOOGLE_SHEET_ID,
-
-            fields:
-                "sheets.properties"
+            spreadsheetId: GOOGLE_SHEET_ID,
+            fields: "sheets.properties"
         });
 
     const journalSheet =
         metadata.data.sheets.find(
-            sheet =>
-                sheet.properties.title ===
-                SHEET_NAME
+            sheet => sheet.properties.title === SHEET_NAME
         );
 
     if (!journalSheet) {
-
-        throw new Error(
-            `Sheet "${SHEET_NAME}" tidak ditemukan.`
-        );
+        throw new Error(`Sheet "${SHEET_NAME}" tidak ditemukan.`);
     }
 
     return journalSheet.properties.sheetId;
@@ -665,18 +427,9 @@ async function getJournalSheetId() {
 // EXPRESS JSON
 // ============================================================
 
-app.use(
-    express.json({
-        limit: "15mb"
-    })
-);
+app.use(express.json({ limit: "5mb" }));
 
-app.use(
-    express.urlencoded({
-        extended: true,
-        limit: "15mb"
-    })
-);
+app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
 // ============================================================
 // SECURITY HEADERS
@@ -684,16 +437,8 @@ app.use(
 
 app.use((req, res, next) => {
 
-    res.setHeader(
-        "X-Content-Type-Options",
-        "nosniff"
-    );
-
-    res.setHeader(
-        "X-Frame-Options",
-        "SAMEORIGIN"
-    );
-
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
     res.setHeader(
         "Referrer-Policy",
         "strict-origin-when-cross-origin"
@@ -708,13 +453,8 @@ app.use((req, res, next) => {
 
 app.use(
     express.static(PUBLIC_DIR, {
-
         index: false,
-
-        extensions: [
-            "html"
-        ],
-
+        extensions: ["html"],
         maxAge: "1h"
     })
 );
@@ -723,29 +463,15 @@ app.use(
 // ADMIN AUTH
 // ============================================================
 
-function requireAdmin(
-    req,
-    res,
-    next
-) {
+function requireAdmin(req, res, next) {
 
-    const password =
-        req.headers[
-            "x-admin-password"
-        ];
+    const password = req.headers["x-admin-password"];
 
-    if (
-        !password ||
-        password !==
-            ADMIN_PASSWORD
-    ) {
+    if (!password || password !== ADMIN_PASSWORD) {
 
         return res.status(401).json({
-
             success: false,
-
-            error:
-                "Akses admin ditolak."
+            error: "Akses admin ditolak."
         });
     }
 
@@ -756,306 +482,151 @@ function requireAdmin(
 // HEALTH
 // ============================================================
 
-app.get(
-    "/health",
-    (req, res) => {
+app.get("/health", (req, res) => {
 
-        res.status(200).json({
-
-            status: "ok",
-
-            service:
-                "AI Assistant Gold Journal",
-
-            database:
-                "Google Sheets",
-
-            imageStorage:
-                "ImgBB",
-
-            googleSheets:
-                Boolean(sheets),
-
-            imgbb:
-                Boolean(IMGBB_API_KEY),
-
-            dateSeparator:
-                false,
-
-            timestamp:
-                new Date().toISOString()
-        });
-    }
-);
+    res.status(200).json({
+        status: "ok",
+        service: "AI Assistant Gold Journal",
+        database: "Google Sheets",
+        googleSheets: Boolean(sheets),
+        timestamp: new Date().toISOString()
+    });
+});
 
 // ============================================================
 // API STATUS
 // ============================================================
 
-app.get(
-    "/api/status",
-    (req, res) => {
+app.get("/api/status", (req, res) => {
 
-        res.status(200).json({
-
-            success: true,
-
-            message:
-                "AI Assistant Gold Journal server is running",
-
-            service:
-                "ai-assistant-gold-journal",
-
-            version:
-                "4.2.0",
-
-            database:
-                "Google Sheets",
-
-            imageStorage:
-                "ImgBB",
-
-            sheet:
-                SHEET_NAME,
-
-            dateSeparator:
-                false,
-
-            node:
-                process.version,
-
-            environment:
-                process.env.NODE_ENV ||
-                "production",
-
-            timestamp:
-                new Date().toISOString()
-        });
-    }
-);
+    res.status(200).json({
+        success: true,
+        message: "AI Assistant Gold Journal server is running",
+        service: "ai-assistant-gold-journal",
+        version: "5.0.0",
+        database: "Google Sheets",
+        sheet: SHEET_NAME,
+        node: process.version,
+        environment: process.env.NODE_ENV || "production",
+        timestamp: new Date().toISOString()
+    });
+});
 
 // ============================================================
 // ADMIN VERIFY
 // ============================================================
 
-app.post(
-    "/api/admin/verify",
-    (req, res) => {
+app.post("/api/admin/verify", (req, res) => {
 
-        const password =
-            String(
-                req.body.password || ""
-            );
+    const password = String(req.body.password || "");
 
-        if (
-            password ===
-            ADMIN_PASSWORD
-        ) {
-
-            return res.json({
-
-                ok: true
-            });
-        }
-
-        return res.status(401).json({
-
-            ok: false
-        });
+    if (password === ADMIN_PASSWORD) {
+        return res.json({ ok: true });
     }
-);
+
+    return res.status(401).json({ ok: false });
+});
 
 // ============================================================
 // GET DAY
 // ============================================================
 
-app.get(
-    "/api/day/:date",
-    async (req, res) => {
+app.get("/api/day/:date", async (req, res) => {
 
-        try {
+    try {
 
-            const date =
-                req.params.date;
+        const date = req.params.date;
 
-            const signals =
-                await getSignalsByDate(
-                    date
-                );
+        const signals = await getSignalsByDate(date);
 
-            const screenshotSignal =
-                signals.find(
-                    signal =>
-                        signal.screenshotUrl
-                );
+        return res.json({
+            date,
+            signals
+        });
 
-            return res.json({
+    } catch (error) {
 
-                date,
+        console.error("❌ GET DAY ERROR:");
+        console.error(error);
 
-                signals,
-
-                screenshot:
-                    screenshotSignal
-                        ? screenshotSignal.screenshotUrl
-                        : null
-            });
-
-        } catch (error) {
-
-            console.error(
-                "❌ GET DAY ERROR:"
-            );
-
-            console.error(error);
-
-            return res.status(500).json({
-
-                success: false,
-
-                error:
-                    "Gagal mengambil data Google Sheets."
-            });
-        }
+        return res.status(500).json({
+            success: false,
+            error: "Gagal mengambil data Google Sheets."
+        });
     }
-);
+});
 
 // ============================================================
 // GET LATEST
 // ============================================================
 
-app.get(
-    "/api/latest",
-    async (req, res) => {
+app.get("/api/latest", async (req, res) => {
 
-        try {
+    try {
 
-            const dates =
-                await getAvailableDates();
+        const dates = await getAvailableDates();
 
-            if (
-                !dates.length
-            ) {
-
-                return res.json({
-
-                    date: null
-                });
-            }
-
-            return res.json({
-
-                date:
-                    dates[
-                        dates.length - 1
-                    ]
-            });
-
-        } catch (error) {
-
-            console.error(
-                "❌ GET LATEST ERROR:"
-            );
-
-            console.error(error);
-
-            return res.status(500).json({
-
-                success: false,
-
-                error:
-                    "Gagal mengambil tanggal terbaru."
-            });
+        if (!dates.length) {
+            return res.json({ date: null });
         }
+
+        return res.json({
+            date: dates[dates.length - 1]
+        });
+
+    } catch (error) {
+
+        console.error("❌ GET LATEST ERROR:");
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            error: "Gagal mengambil tanggal terbaru."
+        });
     }
-);
+});
 
 // ============================================================
 // GET MONTH
 // ============================================================
 
-app.get(
-    "/api/month/:month",
-    async (req, res) => {
+app.get("/api/month/:month", async (req, res) => {
 
-        try {
+    try {
 
-            const month =
-                req.params.month;
+        const month = req.params.month;
 
-            const signals =
-                await getAllSignals();
+        const signals = await getAllSignals();
 
-            const result = {};
+        const result = {};
 
-            signals
-                .filter(
-                    signal =>
-                        signal.date &&
-                        signal.date.startsWith(
-                            month
-                        )
-                )
-                .forEach(
-                    signal => {
+        signals
+            .filter(
+                signal =>
+                    signal.date && signal.date.startsWith(month)
+            )
+            .forEach(signal => {
 
-                        if (
-                            !result[
-                                signal.date
-                            ]
-                        ) {
+                if (!result[signal.date]) {
+                    result[signal.date] = { signals: [] };
+                }
 
-                            result[
-                                signal.date
-                            ] = {
-
-                                signals: [],
-
-                                screenshot:
-                                    null
-                            };
-                        }
-
-                        result[
-                            signal.date
-                        ].signals.push(
-                            signal
-                        );
-
-                        if (
-                            signal.screenshotUrl
-                        ) {
-
-                            result[
-                                signal.date
-                            ].screenshot =
-                                signal.screenshotUrl;
-                        }
-                    }
-                );
-
-            return res.json(
-                result
-            );
-
-        } catch (error) {
-
-            console.error(
-                "❌ GET MONTH ERROR:"
-            );
-
-            console.error(error);
-
-            return res.status(500).json({
-
-                success: false,
-
-                error:
-                    "Gagal mengambil data bulan."
+                result[signal.date].signals.push(signal);
             });
-        }
+
+        return res.json(result);
+
+    } catch (error) {
+
+        console.error("❌ GET MONTH ERROR:");
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            error: "Gagal mengambil data bulan."
+        });
     }
-);
+});
 
 // ============================================================
 // ADD SIGNAL
@@ -1068,189 +639,108 @@ app.post(
 
         try {
 
-            const date =
-                String(
-                    req.params.date || ""
-                ).trim();
+            const date = String(req.params.date || "").trim();
 
             let {
-
                 time,
-
                 direction,
-
                 entryPrice,
-
-                tp1Price,
-
-                tp2Price,
-
-                slPrice,
-
+                resultPrice,
                 result,
-
                 pnl
-
             } = req.body;
 
             // ------------------------------------------------
             // NORMALISASI
             // ------------------------------------------------
 
-            time =
-                cleanPrice(time);
+            time = cleanPrice(time);
 
             direction =
-                String(
-                    direction || "BUY"
-                ).trim().toUpperCase();
+                String(direction || "BUY").trim().toUpperCase();
 
-            result =
-                String(
-                    result || ""
-                ).trim().toUpperCase();
+            result = String(result || "").trim().toUpperCase();
 
-            entryPrice =
-                cleanPrice(
-                    entryPrice
-                );
+            entryPrice = cleanPrice(entryPrice);
 
-            tp1Price =
-                cleanPrice(
-                    tp1Price
-                );
-
-            tp2Price =
-                cleanPrice(
-                    tp2Price
-                );
-
-            slPrice =
-                cleanPrice(
-                    slPrice
-                );
+            resultPrice = cleanPrice(resultPrice);
 
             // ------------------------------------------------
             // VALIDATION
             // ------------------------------------------------
 
             if (!date) {
-
                 return res.status(400).json({
-
                     success: false,
-
-                    error:
-                        "Tanggal wajib diisi."
+                    error: "Tanggal wajib diisi."
                 });
             }
 
             if (!time) {
-
                 return res.status(400).json({
-
                     success: false,
-
-                    error:
-                        "Jam signal wajib diisi."
+                    error: "Jam signal wajib diisi."
                 });
             }
 
             if (!result) {
-
                 return res.status(400).json({
-
                     success: false,
-
-                    error:
-                        "Hasil signal wajib diisi."
+                    error: "Hasil signal wajib diisi."
                 });
             }
 
-            const allowedDirections = [
-
-                "BUY",
-
-                "SELL"
-            ];
+            const allowedDirections = ["BUY", "SELL"];
 
             const allowedResults = [
-
                 "TP1",
-
                 "TP2",
-
                 "SL",
-
                 "PENDING",
-
                 "NO SIGNAL"
             ];
 
             if (
                 direction &&
-                !allowedDirections.includes(
-                    direction
-                )
+                !allowedDirections.includes(direction)
             ) {
-
                 return res.status(400).json({
-
                     success: false,
-
-                    error:
-                        "Arah signal tidak valid."
+                    error: "Arah signal tidak valid."
                 });
             }
 
-            if (
-                !allowedResults.includes(
-                    result
-                )
-            ) {
-
+            if (!allowedResults.includes(result)) {
                 return res.status(400).json({
-
                     success: false,
-
-                    error:
-                        "Hasil signal tidak valid."
+                    error: "Hasil signal tidak valid."
                 });
             }
 
             // ------------------------------------------------
-            // HARGA TETAP SESUAI FIELD WEBSITE
+            // PEMETAAN HARGA KE KOLOM YANG BENAR
             //
-            // ENTRY -> E
-            // TP1   -> F
-            // TP2   -> G
-            // SL    -> H
+            // ENTRY -> E (selalu dari field "entryPrice")
+            // TP1   -> F (hanya diisi jika result === "TP1")
+            // TP2   -> G (hanya diisi jika result === "TP2")
+            // SL    -> H (hanya diisi jika result === "SL")
             //
-            // PENTING:
-            // Jangan pernah membuat:
-            //
-            // tp1Price = entryPrice
-            //
-            // atau:
-            //
-            // tp2Price = entryPrice
-            //
-            // atau:
-            //
-            // slPrice = entryPrice
+            // Frontend mengirim SATU field harga hasil
+            // bernama "resultPrice"; di sinilah field itu
+            // dipetakan ke kolom F/G/H sesuai "result".
             // ------------------------------------------------
 
             const finalEntryPrice =
-                entryPrice;
+                result === "NO SIGNAL" ? "" : entryPrice;
 
             const finalTp1Price =
-                tp1Price;
+                result === "TP1" ? resultPrice : "";
 
             const finalTp2Price =
-                tp2Price;
+                result === "TP2" ? resultPrice : "";
 
             const finalSlPrice =
-                slPrice;
+                result === "SL" ? resultPrice : "";
 
             // ------------------------------------------------
             // PNL
@@ -1264,15 +754,9 @@ app.post(
                 String(pnl).trim() !== ""
             ) {
 
-                numericPnl =
-                    Number(pnl);
+                numericPnl = Number(pnl);
 
-                if (
-                    Number.isNaN(
-                        numericPnl
-                    )
-                ) {
-
+                if (Number.isNaN(numericPnl)) {
                     numericPnl = 0;
                 }
             }
@@ -1283,94 +767,36 @@ app.post(
 
             const signal = {
 
-                id:
-                    generateId(),
-
+                id: generateId(),
                 date,
-
                 time,
+                direction: direction === "SELL" ? "SELL" : "BUY",
 
-                direction:
-                    direction === "SELL"
-                        ? "SELL"
-                        : "BUY",
-
-                // E
-                entryPrice:
-                    finalEntryPrice,
-
-                // F
-                tp1Price:
-                    finalTp1Price,
-
-                // G
-                tp2Price:
-                    finalTp2Price,
-
-                // H
-                slPrice:
-                    finalSlPrice,
+                entryPrice: finalEntryPrice,
+                tp1Price: finalTp1Price,
+                tp2Price: finalTp2Price,
+                slPrice: finalSlPrice,
 
                 result,
-
-                pnl:
-                    numericPnl,
-
-                createdAt:
-                    new Date()
-                        .toISOString(),
-
-                screenshotUrl:
-                    null
+                pnl: numericPnl,
+                createdAt: new Date().toISOString()
             };
 
             // ------------------------------------------------
             // LOG UNTUK MEMASTIKAN HARGA
             // ------------------------------------------------
 
-            console.log(
-                "=============================================="
-            );
-
-            console.log(
-                "📥 SIGNAL BARU"
-            );
-
-            console.log(
-                `📅 Date   : ${signal.date}`
-            );
-
-            console.log(
-                `⏰ Time   : ${signal.time}`
-            );
-
-            console.log(
-                `📈 Dir    : ${signal.direction}`
-            );
-
-            console.log(
-                `💰 Entry  : ${signal.entryPrice}`
-            );
-
-            console.log(
-                `🎯 TP1    : ${signal.tp1Price}`
-            );
-
-            console.log(
-                `🎯 TP2    : ${signal.tp2Price}`
-            );
-
-            console.log(
-                `🛑 SL     : ${signal.slPrice}`
-            );
-
-            console.log(
-                `🏁 Result : ${signal.result}`
-            );
-
-            console.log(
-                "=============================================="
-            );
+            console.log("==============================================");
+            console.log("📥 SIGNAL BARU");
+            console.log(`📅 Date   : ${signal.date}`);
+            console.log(`⏰ Time   : ${signal.time}`);
+            console.log(`📈 Dir    : ${signal.direction}`);
+            console.log(`💰 Entry  : ${signal.entryPrice}`);
+            console.log(`🎯 TP1    : ${signal.tp1Price}`);
+            console.log(`🎯 TP2    : ${signal.tp2Price}`);
+            console.log(`🛑 SL     : ${signal.slPrice}`);
+            console.log(`🏁 Result : ${signal.result}`);
+            console.log("==============================================");
 
             // ------------------------------------------------
             // SAVE TO GOOGLE SHEETS
@@ -1378,57 +804,24 @@ app.post(
 
             await sheets.spreadsheets.values.append({
 
-                spreadsheetId:
-                    GOOGLE_SHEET_ID,
-
-                range:
-                    `${SHEET_NAME}!A:L`,
-
-                valueInputOption:
-                    "RAW",
-
-                insertDataOption:
-                    "INSERT_ROWS",
+                spreadsheetId: GOOGLE_SHEET_ID,
+                range: SHEET_RANGE_FULL,
+                valueInputOption: "RAW",
+                insertDataOption: "INSERT_ROWS",
 
                 requestBody: {
-
                     values: [[
-
-                        // A
                         signal.id,
-
-                        // B
                         signal.date,
-
-                        // C
                         signal.time,
-
-                        // D
                         signal.direction,
-
-                        // E
                         signal.entryPrice,
-
-                        // F
                         signal.tp1Price,
-
-                        // G
                         signal.tp2Price,
-
-                        // H
                         signal.slPrice,
-
-                        // I
                         signal.result,
-
-                        // J
                         signal.pnl,
-
-                        // K
-                        signal.createdAt,
-
-                        // L
-                        ""
+                        signal.createdAt
                     ]]
                 }
             });
@@ -1437,27 +830,21 @@ app.post(
                 `✅ SIGNAL TERSIMPAN: ${signal.date} ${signal.time}`
             );
 
+            signal.resultPrice = computeResultPrice(signal);
+
             return res.json({
-
                 success: true,
-
                 signal
             });
 
         } catch (error) {
 
-            console.error(
-                "❌ ADD SIGNAL ERROR:"
-            );
-
+            console.error("❌ ADD SIGNAL ERROR:");
             console.error(error);
 
             return res.status(500).json({
-
                 success: false,
-
-                error:
-                    "Gagal menyimpan signal ke Google Sheets."
+                error: "Gagal menyimpan signal ke Google Sheets."
             });
         }
     }
@@ -1474,473 +861,49 @@ app.delete(
 
         try {
 
-            const id =
-                req.params.id;
+            const id = req.params.id;
 
-            const rowNumber =
-                await findSignalRow(
-                    id
-                );
+            const rowNumber = await findSignalRow(id);
 
             if (!rowNumber) {
-
                 return res.status(404).json({
-
                     success: false,
-
-                    error:
-                        "Signal tidak ditemukan."
+                    error: "Signal tidak ditemukan."
                 });
             }
 
-            const sheetId =
-                await getJournalSheetId();
+            const sheetId = await getJournalSheetId();
 
             await sheets.spreadsheets.batchUpdate({
 
-                spreadsheetId:
-                    GOOGLE_SHEET_ID,
+                spreadsheetId: GOOGLE_SHEET_ID,
 
                 requestBody: {
-
                     requests: [{
-
                         deleteDimension: {
-
                             range: {
-
                                 sheetId,
-
-                                dimension:
-                                    "ROWS",
-
-                                startIndex:
-                                    rowNumber - 1,
-
-                                endIndex:
-                                    rowNumber
+                                dimension: "ROWS",
+                                startIndex: rowNumber - 1,
+                                endIndex: rowNumber
                             }
                         }
                     }]
                 }
             });
 
-            console.log(
-                `🗑️ SIGNAL DIHAPUS: ${id}`
-            );
+            console.log(`🗑️ SIGNAL DIHAPUS: ${id}`);
 
-            return res.json({
-
-                success: true
-            });
+            return res.json({ success: true });
 
         } catch (error) {
 
-            console.error(
-                "❌ DELETE SIGNAL ERROR:"
-            );
-
+            console.error("❌ DELETE SIGNAL ERROR:");
             console.error(error);
 
             return res.status(500).json({
-
                 success: false,
-
-                error:
-                    "Gagal menghapus signal."
-            });
-        }
-    }
-);
-
-// ============================================================
-// IMGBB UPLOAD HELPER
-// ============================================================
-
-function uploadToImgBB(base64Image) {
-
-    return new Promise(
-        (resolve, reject) => {
-
-            if (
-                !IMGBB_API_KEY
-            ) {
-
-                return reject(
-                    new Error(
-                        "IMGBB_API_KEY belum tersedia."
-                    )
-                );
-            }
-
-            if (
-                typeof base64Image !==
-                "string"
-            ) {
-
-                return reject(
-                    new Error(
-                        "Data gambar tidak valid."
-                    )
-                );
-            }
-
-            let imageData =
-                base64Image;
-
-            if (
-                imageData.includes(",")
-            ) {
-
-                imageData =
-                    imageData.split(
-                        ","
-                    )[1];
-            }
-
-            const postData =
-                new URLSearchParams({
-
-                    key:
-                        IMGBB_API_KEY,
-
-                    image:
-                        imageData
-
-                }).toString();
-
-            const options = {
-
-                hostname:
-                    "api.imgbb.com",
-
-                path:
-                    "/1/upload",
-
-                method:
-                    "POST",
-
-                headers: {
-
-                    "Content-Type":
-                        "application/x-www-form-urlencoded",
-
-                    "Content-Length":
-                        Buffer.byteLength(
-                            postData
-                        )
-                }
-            };
-
-            const request =
-                https.request(
-                    options,
-                    response => {
-
-                        let body = "";
-
-                        response.on(
-                            "data",
-                            chunk => {
-
-                                body +=
-                                    chunk;
-                            }
-                        );
-
-                        response.on(
-                            "end",
-                            () => {
-
-                                try {
-
-                                    const result =
-                                        JSON.parse(
-                                            body
-                                        );
-
-                                    if (
-                                        !result.success ||
-                                        !result.data
-                                    ) {
-
-                                        return reject(
-                                            new Error(
-                                                result.error
-                                                    ?.message ||
-                                                "Upload ImgBB gagal."
-                                            )
-                                        );
-                                    }
-
-                                    const imageUrl =
-                                        result.data.display_url ||
-                                        result.data.url;
-
-                                    if (
-                                        !imageUrl
-                                    ) {
-
-                                        return reject(
-                                            new Error(
-                                                "ImgBB tidak mengembalikan URL gambar."
-                                            )
-                                        );
-                                    }
-
-                                    resolve(
-                                        imageUrl
-                                    );
-
-                                } catch (
-                                    error
-                                ) {
-
-                                    reject(
-                                        error
-                                    );
-                                }
-                            }
-                        );
-                    }
-                );
-
-            request.on(
-                "error",
-                error => {
-
-                    reject(
-                        error
-                    );
-                }
-            );
-
-            request.write(
-                postData
-            );
-
-            request.end();
-        }
-    );
-}
-
-// ============================================================
-// SAVE SCREENSHOT
-// ============================================================
-
-app.post(
-    "/api/day/:date/screenshot",
-    requireAdmin,
-    async (req, res) => {
-
-        try {
-
-            const date =
-                String(
-                    req.params.date || ""
-                ).trim();
-
-            const screenshot =
-                req.body.screenshot;
-
-            // ------------------------------------------------
-            // VALIDATION
-            // ------------------------------------------------
-
-            if (!screenshot) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    error:
-                        "Screenshot belum dipilih."
-                });
-            }
-
-            if (
-                typeof screenshot !==
-                    "string" ||
-                !screenshot.startsWith(
-                    "data:image/"
-                )
-            ) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    error:
-                        "Format screenshot tidak valid."
-                });
-            }
-
-            if (
-                !IMGBB_API_KEY
-            ) {
-
-                return res.status(500).json({
-
-                    success: false,
-
-                    error:
-                        "IMGBB_API_KEY belum dikonfigurasi."
-                });
-            }
-
-            // ------------------------------------------------
-            // UPLOAD KE IMGBB
-            // ------------------------------------------------
-
-            console.log(
-                `📤 Upload screenshot ke ImgBB: ${date}`
-            );
-
-            const imageUrl =
-                await uploadToImgBB(
-                    screenshot
-                );
-
-            console.log(
-                "✅ ImgBB upload berhasil:"
-            );
-
-            console.log(
-                imageUrl
-            );
-
-            // ------------------------------------------------
-            // CARI SIGNAL PADA TANGGAL TERSEBUT
-            // ------------------------------------------------
-
-            const signals =
-                await getSignalsByDate(
-                    date
-                );
-
-            // ------------------------------------------------
-            // JIKA ADA SIGNAL
-            // SIMPAN URL PADA SIGNAL PERTAMA
-            // ------------------------------------------------
-
-            if (
-                signals.length > 0
-            ) {
-
-                const firstSignal =
-                    signals[0];
-
-                const rowNumber =
-                    await findSignalRow(
-                        firstSignal.id
-                    );
-
-                if (
-                    rowNumber
-                ) {
-
-                    await sheets.spreadsheets.values.update({
-
-                        spreadsheetId:
-                            GOOGLE_SHEET_ID,
-
-                        range:
-                            `${SHEET_NAME}!L${rowNumber}`,
-
-                        valueInputOption:
-                            "RAW",
-
-                        requestBody: {
-
-                            values: [[
-                                imageUrl
-                            ]]
-                        }
-                    });
-                }
-
-            } else {
-
-                // ------------------------------------------------
-                // BELUM ADA SIGNAL
-                // BUAT ROW SCREENSHOT
-                // TANPA DATE SEPARATOR
-                // ------------------------------------------------
-
-                await sheets.spreadsheets.values.append({
-
-                    spreadsheetId:
-                        GOOGLE_SHEET_ID,
-
-                    range:
-                        `${SHEET_NAME}!A:L`,
-
-                    valueInputOption:
-                        "RAW",
-
-                    insertDataOption:
-                        "INSERT_ROWS",
-
-                    requestBody: {
-
-                        values: [[
-
-                            generateId(),
-
-                            date,
-
-                            "",
-
-                            "",
-
-                            "",
-
-                            "",
-
-                            "",
-
-                            "",
-
-                            "",
-
-                            0,
-
-                            new Date()
-                                .toISOString(),
-
-                            imageUrl
-
-                        ]]
-                    }
-                });
-            }
-
-            return res.json({
-
-                success: true,
-
-                screenshot:
-                    imageUrl,
-
-                url:
-                    imageUrl
-            });
-
-        } catch (error) {
-
-            console.error(
-                "❌ SCREENSHOT ERROR:"
-            );
-
-            console.error(error);
-
-            return res.status(500).json({
-
-                success: false,
-
-                error:
-                    error.message ||
-                    "Gagal menyimpan screenshot."
+                error: "Gagal menghapus signal."
             });
         }
     }
@@ -1950,260 +913,119 @@ app.post(
 // HOME
 // ============================================================
 
-app.get(
-    "/",
-    (req, res) => {
+app.get("/", (req, res) => {
 
-        const indexPath =
-            path.join(
-                ROOT_DIR,
-                "index.html"
-            );
+    const indexPath = path.join(ROOT_DIR, "index.html");
 
-        res.sendFile(
-            indexPath,
-            error => {
+    res.sendFile(indexPath, error => {
 
-                if (error) {
+        if (error) {
 
-                    console.error(
-                        "❌ Gagal mengirim index.html:"
-                    );
+            console.error("❌ Gagal mengirim index.html:");
+            console.error(error);
 
-                    console.error(
-                        error
-                    );
-
-                    if (
-                        !res.headersSent
-                    ) {
-
-                        res.status(
-                            500
-                        ).send(
-                            "index.html tidak ditemukan."
-                        );
-                    }
-                }
+            if (!res.headersSent) {
+                res.status(500).send(
+                    "index.html tidak ditemukan."
+                );
             }
-        );
-    }
-);
+        }
+    });
+});
 
 // ============================================================
 // SPA FALLBACK
 // ============================================================
 
-app.get(
-    "*",
-    (req, res, next) => {
+app.get("*", (req, res, next) => {
 
-        if (
-            req.path.startsWith(
-                "/api/"
-            )
-        ) {
-
-            return next();
-        }
-
-        if (
-            path.extname(
-                req.path
-            )
-        ) {
-
-            return next();
-        }
-
-        const indexPath =
-            path.join(
-                ROOT_DIR,
-                "index.html"
-            );
-
-        res.sendFile(
-            indexPath,
-            error => {
-
-                if (error) {
-
-                    next(error);
-                }
-            }
-        );
+    if (req.path.startsWith("/api/")) {
+        return next();
     }
-);
+
+    if (path.extname(req.path)) {
+        return next();
+    }
+
+    const indexPath = path.join(ROOT_DIR, "index.html");
+
+    res.sendFile(indexPath, error => {
+        if (error) {
+            next(error);
+        }
+    });
+});
 
 // ============================================================
 // 404
 // ============================================================
 
-app.use(
-    (req, res) => {
+app.use((req, res) => {
 
-        if (
-            req.path.startsWith(
-                "/api/"
-            )
-        ) {
+    if (req.path.startsWith("/api/")) {
 
-            return res.status(
-                404
-            ).json({
-
-                success: false,
-
-                error:
-                    "API endpoint tidak ditemukan",
-
-                path:
-                    req.path
-            });
-        }
-
-        res.status(
-            404
-        ).send(`
-
-<!DOCTYPE html>
-
-<html lang="id">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
-
-<title>404</title>
-
-</head>
-
-<body style="
-background:#0b0f14;
-color:white;
-font-family:Arial;
-text-align:center;
-padding:80px 20px;
-">
-
-<h1>404</h1>
-
-<p>
-Halaman tidak ditemukan.
-</p>
-
-<a href="/" style="
-color:white;
-">
-
-Kembali ke Dashboard
-
-</a>
-
-</body>
-
-</html>
-
-`);
+        return res.status(404).json({
+            success: false,
+            error: "API endpoint tidak ditemukan",
+            path: req.path
+        });
     }
-);
+
+    res.status(404).send(`
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>404</title>
+</head>
+<body style="background:#0b0f14;color:white;font-family:Arial;text-align:center;padding:80px 20px;">
+<h1>404</h1>
+<p>Halaman tidak ditemukan.</p>
+<a href="/" style="color:white;">Kembali ke Dashboard</a>
+</body>
+</html>
+`);
+});
 
 // ============================================================
 // ERROR HANDLER
 // ============================================================
 
-app.use(
-    (
-        err,
-        req,
-        res,
-        next
-    ) => {
+app.use((err, req, res, next) => {
 
-        console.error(
-            "=============================================="
-        );
+    console.error("==============================================");
+    console.error("❌ EXPRESS SERVER ERROR");
+    console.error("==============================================");
+    console.error(err);
 
-        console.error(
-            "❌ EXPRESS SERVER ERROR"
-        );
-
-        console.error(
-            "=============================================="
-        );
-
-        console.error(
-            err
-        );
-
-        if (
-            res.headersSent
-        ) {
-
-            return next(err);
-        }
-
-        if (
-            req.path.startsWith(
-                "/api/"
-            )
-        ) {
-
-            return res.status(
-                500
-            ).json({
-
-                success: false,
-
-                error:
-                    "Internal Server Error"
-            });
-        }
-
-        res.status(
-            500
-        ).send(`
-
-<!DOCTYPE html>
-
-<html lang="id">
-
-<head>
-
-<meta charset="UTF-8">
-
-<title>500</title>
-
-</head>
-
-<body style="
-background:#0b0f14;
-color:white;
-font-family:Arial;
-text-align:center;
-padding:60px 20px;
-">
-
-<h1>500</h1>
-
-<p>
-Terjadi kesalahan pada server.
-</p>
-
-<a href="/" style="color:white;">
-Kembali
-</a>
-
-</body>
-
-</html>
-
-`);
+    if (res.headersSent) {
+        return next(err);
     }
-);
+
+    if (req.path.startsWith("/api/")) {
+
+        return res.status(500).json({
+            success: false,
+            error: "Internal Server Error"
+        });
+    }
+
+    res.status(500).send(`
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>500</title>
+</head>
+<body style="background:#0b0f14;color:white;font-family:Arial;text-align:center;padding:60px 20px;">
+<h1>500</h1>
+<p>Terjadi kesalahan pada server.</p>
+<a href="/" style="color:white;">Kembali</a>
+</body>
+</html>
+`);
+});
 
 // ============================================================
 // INITIALIZE GOOGLE SHEETS
@@ -2215,229 +1037,88 @@ initializeGoogleSheets();
 // START SERVER
 // ============================================================
 
-const server =
-    app.listen(
-        PORT,
-        "0.0.0.0",
-        async () => {
+const server = app.listen(PORT, "0.0.0.0", async () => {
 
-            console.log("");
+    console.log("");
+    console.log("==============================================");
+    console.log("🚀 AI ASSISTANT GOLD JOURNAL");
+    console.log("==============================================");
+    console.log(`🌐 Server : 0.0.0.0:${PORT}`);
+    console.log(`📁 Root   : ${ROOT_DIR}`);
+    console.log("💾 Data   : GOOGLE SHEETS");
+    console.log(`📊 Sheet  : ${SHEET_NAME}`);
+    console.log("🟢 Health : /health");
+    console.log("🔵 API    : /api/status");
+    console.log("🔐 Admin  : ENABLED");
+    console.log("==============================================");
 
-            console.log(
-                "=============================================="
-            );
+    if (sheets) {
 
-            console.log(
-                "🚀 AI ASSISTANT GOLD JOURNAL"
-            );
+        try {
 
-            console.log(
-                "=============================================="
-            );
+            await ensureSheetHeader();
 
-            console.log(
-                `🌐 Server : 0.0.0.0:${PORT}`
-            );
+            console.log("✅ GOOGLE SHEETS TERHUBUNG");
 
-            console.log(
-                `📁 Root   : ${ROOT_DIR}`
-            );
+        } catch (error) {
 
-            console.log(
-                "💾 Data   : GOOGLE SHEETS"
-            );
-
-            console.log(
-                `📊 Sheet  : ${SHEET_NAME}`
-            );
-
-            console.log(
-                "🖼️ Image  : ImgBB"
-            );
-
-            console.log(
-                "📅 Date Separator : DISABLED"
-            );
-
-            console.log(
-                "🟢 Health : /health"
-            );
-
-            console.log(
-                "🔵 API    : /api/status"
-            );
-
-            console.log(
-                "🔐 Admin  : ENABLED"
-            );
-
-            console.log(
-                "=============================================="
-            );
-
-            // ------------------------------------------------
-            // GOOGLE SHEETS TEST
-            // ------------------------------------------------
-
-            if (
-                sheets
-            ) {
-
-                try {
-
-                    await ensureSheetHeader();
-
-                    console.log(
-                        "✅ GOOGLE SHEETS TERHUBUNG"
-                    );
-
-                } catch (
-                    error
-                ) {
-
-                    console.error(
-                        "❌ GOOGLE SHEETS TIDAK BISA DIAKSES"
-                    );
-
-                    console.error(
-                        error.message
-                    );
-                }
-
-            } else {
-
-                console.error(
-                    "❌ GOOGLE SHEETS BELUM TERKONFIGURASI"
-                );
-            }
-
-            // ------------------------------------------------
-            // IMGBB TEST
-            // ------------------------------------------------
-
-            if (
-                IMGBB_API_KEY
-            ) {
-
-                console.log(
-                    "✅ IMGBB API KEY TERDETEKSI"
-                );
-
-            } else {
-
-                console.error(
-                    "❌ IMGBB_API_KEY BELUM TERKONFIGURASI"
-                );
-            }
-
-            console.log(
-                "=============================================="
-            );
-
-            console.log(
-                "✅ SERVER BERHASIL START"
-            );
-
-            console.log(
-                "=============================================="
-            );
-
-            console.log("");
+            console.error("❌ GOOGLE SHEETS TIDAK BISA DIAKSES");
+            console.error(error.message);
         }
-    );
+
+    } else {
+
+        console.error("❌ GOOGLE SHEETS BELUM TERKONFIGURASI");
+    }
+
+    console.log("==============================================");
+    console.log("✅ SERVER BERHASIL START");
+    console.log("==============================================");
+    console.log("");
+});
 
 // ============================================================
 // SERVER ERROR
 // ============================================================
 
-server.on(
-    "error",
-    error => {
+server.on("error", error => {
 
-        console.error(
-            "❌ SERVER ERROR"
-        );
-
-        console.error(
-            error
-        );
-    }
-);
+    console.error("❌ SERVER ERROR");
+    console.error(error);
+});
 
 // ============================================================
 // GRACEFUL SHUTDOWN
 // ============================================================
 
-function shutdown(
-    signal
-) {
+function shutdown(signal) {
 
-    console.log(
-        `⚠️ ${signal} diterima.`
-    );
+    console.log(`⚠️ ${signal} diterima.`);
+    console.log("🛑 Menghentikan server...");
 
-    console.log(
-        "🛑 Menghentikan server..."
-    );
+    server.close(() => {
 
-    server.close(
-        () => {
+        console.log("✅ Server berhasil dihentikan.");
 
-            console.log(
-                "✅ Server berhasil dihentikan."
-            );
-
-            process.exit(
-                0
-            );
-        }
-    );
+        process.exit(0);
+    });
 }
 
-process.on(
-    "SIGTERM",
-    () =>
-        shutdown(
-            "SIGTERM"
-        )
-);
-
-process.on(
-    "SIGINT",
-    () =>
-        shutdown(
-            "SIGINT"
-        )
-);
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 // ============================================================
 // UNCAUGHT ERRORS
 // ============================================================
 
-process.on(
-    "uncaughtException",
-    error => {
+process.on("uncaughtException", error => {
 
-        console.error(
-            "❌ UNCAUGHT EXCEPTION"
-        );
+    console.error("❌ UNCAUGHT EXCEPTION");
+    console.error(error);
+});
 
-        console.error(
-            error
-        );
-    }
-);
+process.on("unhandledRejection", reason => {
 
-process.on(
-    "unhandledRejection",
-    reason => {
-
-        console.error(
-            "❌ UNHANDLED PROMISE REJECTION"
-        );
-
-        console.error(
-            reason
-        );
-    }
-);
+    console.error("❌ UNHANDLED PROMISE REJECTION");
+    console.error(reason);
+});
