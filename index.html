@@ -203,7 +203,6 @@ h1 em{
   border-radius:6px;
 
   flex:1;
-  min-width:0;
 }
 
 .nav-btn{
@@ -219,17 +218,11 @@ h1 em{
 
   font-size:16px;
   cursor:pointer;
-
-  flex-shrink:0;
 }
 
 .nav-btn:hover{
   color:var(--brass);
   border-color:var(--brass-dim);
-}
-
-.nav-btn:active{
-  transform:scale(.97);
 }
 
 .latest-badge{
@@ -374,6 +367,10 @@ h1 em{
 .signal-row{
 
   display:grid;
+
+  /*
+     JAM | ARAH | ENTRY | HASIL | HARGA | PNL
+  */
 
   grid-template-columns:
     48px
@@ -567,70 +564,54 @@ h1 em{
   border-top:1px solid var(--hairline-strong);
 }
 
-.btn-primary{
+/* =========================================================
+   SCREENSHOT
+========================================================= */
 
-  width:100%;
-
-  padding:13px 0;
-
-  background:var(--brass);
-
-  border:none;
-
-  border-radius:6px;
-
-  color:var(--ink);
-
-  font-family:'Inter',sans-serif;
-
-  font-weight:600;
-
-  font-size:14px;
-
-  cursor:pointer;
-
-  margin-top:6px;
+.shot-section{
+  margin-top:32px;
 }
 
-.btn-primary:hover{
-  background:#c9a35d;
+.shot-title{
+  font-size:12px;
+  color:var(--paper-dim);
+
+  letter-spacing:0.3px;
+
+  margin-bottom:10px;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-.btn-primary:disabled{
-  opacity:.6;
-  cursor:wait;
-}
-
-.btn-ghost{
-
-  width:100%;
-
-  padding:11px 0;
-
-  background:none;
-
+.shot-frame{
   border:1px solid var(--hairline-strong);
 
-  border-radius:6px;
+  border-radius:8px;
+
+  overflow:hidden;
+
+  background:var(--surface);
+}
+
+.shot-frame img{
+  width:100%;
+  display:block;
+}
+
+.shot-empty{
+  padding:40px 16px;
+
+  text-align:center;
 
   color:var(--paper-dim);
 
   font-size:13px;
 
-  cursor:pointer;
+  border:1px dashed var(--hairline-strong);
 
-  margin-top:8px;
-}
-
-.save-msg{
-
-  font-size:12px;
-
-  color:var(--win);
-
-  margin-top:10px;
-
-  min-height:14px;
+  border-radius:8px;
 }
 
 /* =========================================================
@@ -772,6 +753,90 @@ h1 em{
   border-radius:6px;
 }
 
+.file-btn{
+
+  display:inline-block;
+
+  padding:10px 16px;
+
+  background:var(--surface);
+
+  border:1px solid var(--hairline-strong);
+
+  border-radius:6px;
+
+  font-size:13px;
+
+  color:var(--paper);
+
+  cursor:pointer;
+}
+
+.file-btn:hover{
+  border-color:var(--brass-dim);
+}
+
+.btn-primary{
+
+  width:100%;
+
+  padding:13px 0;
+
+  background:var(--brass);
+
+  border:none;
+
+  border-radius:6px;
+
+  color:var(--ink);
+
+  font-family:'Inter',sans-serif;
+
+  font-weight:600;
+
+  font-size:14px;
+
+  cursor:pointer;
+
+  margin-top:6px;
+}
+
+.btn-primary:hover{
+  background:#c9a35d;
+}
+
+.btn-ghost{
+
+  width:100%;
+
+  padding:11px 0;
+
+  background:none;
+
+  border:1px solid var(--hairline-strong);
+
+  border-radius:6px;
+
+  color:var(--paper-dim);
+
+  font-size:13px;
+
+  cursor:pointer;
+
+  margin-top:8px;
+}
+
+.save-msg{
+
+  font-size:12px;
+
+  color:var(--win);
+
+  margin-top:10px;
+
+  min-height:14px;
+}
+
 /* =========================================================
    MODAL
 ========================================================= */
@@ -900,22 +965,6 @@ footer{
   font-size:12px;
 
   color:var(--paper-dim);
-}
-
-/* =========================================================
-   LOADING
-========================================================= */
-
-.loading{
-  opacity:.55;
-  pointer-events:none;
-}
-
-.fast-loading{
-  text-align:center;
-  padding:20px 0;
-  color:var(--paper-dim);
-  font-size:12px;
 }
 
 /* =========================================================
@@ -1152,6 +1201,23 @@ Rincian sinyal
 </div>
 
 
+<div class="shot-section">
+
+<div class="shot-title">
+<span>Bukti PnL (MT5)</span>
+</div>
+
+<div id="shotWrap">
+
+<div class="shot-empty">
+Belum ada screenshot untuk tanggal ini
+</div>
+
+</div>
+
+</div>
+
+
 <div id="adminDailyPanel"></div>
 
 </div>
@@ -1282,19 +1348,9 @@ const state = {
 
   adminPassword:null,
 
-  /*
-     Dipakai untuk membatalkan request lama
-     ketika user pindah tanggal dengan cepat.
-  */
-
   dayRequestController:null,
 
   monthRequestController:null,
-
-  /*
-     Cache membuat tanggal yang sudah dibuka
-     tidak perlu diminta ulang dari server.
-  */
 
   dayCache:new Map(),
 
@@ -1313,7 +1369,6 @@ function pad(n){
 
 }
 
-
 function toDateStr(d){
 
   return d.getFullYear()
@@ -1324,7 +1379,6 @@ function toDateStr(d){
 
 }
 
-
 function toMonthStr(d){
 
   return d.getFullYear()
@@ -1332,7 +1386,6 @@ function toMonthStr(d){
     +pad(d.getMonth()+1);
 
 }
-
 
 function fmtDateLabel(dateStr){
 
@@ -1382,6 +1435,16 @@ function fmtDateLabel(dateStr){
    NUMBER FORMAT
 ========================================================= */
 
+/*
+  Semua harga ditampilkan tanpa angka desimal.
+
+  3550
+  3550.00 -> 3550
+  3550.50 -> 3551
+
+  Untuk harga XAUUSD kita memang buat integer.
+*/
+
 function fmtPrice(value){
 
   if(
@@ -1389,23 +1452,16 @@ function fmtPrice(value){
     value === undefined ||
     value === ''
   ){
-
     return '-';
-
   }
-
 
   const num = Number(
     String(value).replace(/,/g,'')
   );
 
-
   if(!Number.isFinite(num)){
-
     return '-';
-
   }
-
 
   return Math.round(num).toString();
 
@@ -1425,25 +1481,17 @@ function fmtPnl(val){
       Math.round(num * 100) / 100
     );
 
-
   if(num > 0){
-
     return '+$'+abs;
-
   }
-
 
   if(num < 0){
-
     return '-$'+abs;
-
   }
-
 
   return '$0';
 
 }
-
 
 function pnlClass(val){
 
@@ -1464,24 +1512,11 @@ function pnlClass(val){
 
 async function apiGet(url, options={}){
 
-  const res =
-    await fetch(
-      url,
-      {
-        ...options,
-        cache:'no-store'
-      }
-    );
-
+  const res = await fetch(url, { ...options, cache:'no-store' });
 
   if(!res.ok){
-
-    throw new Error(
-      'Request gagal'
-    );
-
+    throw new Error('Request gagal');
   }
-
 
   return res.json();
 
@@ -1494,47 +1529,37 @@ async function apiWrite(
   body
 ){
 
-  const res =
-    await fetch(
-      url,
-      {
+  const res = await fetch(url,{
 
-        method,
+    method,
 
-        headers:{
-          'Content-Type':'application/json',
+    headers:{
+      'Content-Type':'application/json',
+      'x-admin-password':
+        state.adminPassword || ''
+    },
 
-          'x-admin-password':
-            state.adminPassword || ''
-        },
+    body:
+      body !== undefined
+        ? JSON.stringify(body)
+        : undefined
 
-        body:
-          body !== undefined
-            ? JSON.stringify(body)
-            : undefined
-
-      }
-    );
+  });
 
 
   if(!res.ok){
 
     const err =
       await res.json()
-      .catch(
-        () => ({
-          error:'Gagal menyimpan'
-        })
-      );
-
+      .catch(()=>({
+        error:'Gagal menyimpan'
+      }));
 
     throw new Error(
-      err.error ||
-      'Gagal menyimpan'
+      err.error || 'Gagal menyimpan'
     );
 
   }
-
 
   return res.json();
 
@@ -1542,101 +1567,54 @@ async function apiWrite(
 
 
 /* =========================================================
-   LOAD DAY
+   LOAD
 ========================================================= */
 
 async function loadDay(dateStr){
 
-  /*
-     Kalau sudah pernah dibuka,
-     ambil langsung dari cache.
-  */
-
   if(state.dayCache.has(dateStr)){
-
     return state.dayCache.get(dateStr);
-
   }
-
-
-  /*
-     Batalkan request tanggal sebelumnya.
-  */
 
   if(state.dayRequestController){
-
     state.dayRequestController.abort();
-
   }
 
-
-  const controller =
-    new AbortController();
-
-
-  state.dayRequestController =
-    controller;
-
+  const controller = new AbortController();
+  state.dayRequestController = controller;
 
   try{
-
-    const data =
-      await apiGet(
-        '/api/day/'+dateStr,
-        {
-          signal:
-            controller.signal
-        }
-      );
-
-
-    /*
-       Simpan ke cache.
-    */
-
-    state.dayCache.set(
-      dateStr,
-      data
+    const data = await apiGet(
+      '/api/day/'+dateStr,
+      { signal:controller.signal }
     );
 
-
+    state.dayCache.set(dateStr,data);
     return data;
 
   }catch(e){
-
-    /*
-       Abort bukan error yang perlu ditampilkan.
-    */
-
     if(e.name === 'AbortError'){
-
       return null;
-
     }
-
-
-    return {
-      signals:[]
-    };
-
+    return {signals:[],screenshot:null};
   }
-
 }
 
+function invalidateDayCache(dateStr){
+  state.dayCache.delete(dateStr);
+}
 
-/* =========================================================
-   FIND LATEST DATE
-========================================================= */
+function invalidateMonthCache(dateStr){
+  if(!dateStr) return;
+  state.monthCache.delete(dateStr.substring(0,7));
+}
 
 async function findLatestDate(){
 
   try{
 
     const d =
-      await apiGet(
-        '/api/latest'
-      );
-
+      await apiGet('/api/latest');
 
     return d.date;
 
@@ -1649,107 +1627,35 @@ async function findLatestDate(){
 }
 
 
-/* =========================================================
-   LOAD MONTH
-========================================================= */
-
 async function loadMonth(monthStr){
 
   if(state.monthCache.has(monthStr)){
-
-    return state.monthCache.get(
-      monthStr
-    );
-
+    return state.monthCache.get(monthStr);
   }
-
 
   if(state.monthRequestController){
-
     state.monthRequestController.abort();
-
   }
 
-
-  const controller =
-    new AbortController();
-
-
-  state.monthRequestController =
-    controller;
-
+  const controller = new AbortController();
+  state.monthRequestController = controller;
 
   try{
-
-    const data =
-      await apiGet(
-        '/api/month/'+monthStr,
-        {
-          signal:
-            controller.signal
-        }
-      );
-
-
-    state.monthCache.set(
-      monthStr,
-      data
+    const data = await apiGet(
+      '/api/month/'+monthStr,
+      { signal:controller.signal }
     );
 
-
+    state.monthCache.set(monthStr,data);
     return data;
 
   }catch(e){
-
     if(e.name === 'AbortError'){
-
       return null;
-
     }
-
-
     return {};
-
   }
-
 }
-
-
-/* =========================================================
-   INVALIDATE CACHE
-========================================================= */
-
-function invalidateDayCache(
-  dateStr
-){
-
-  state.dayCache.delete(
-    dateStr
-  );
-
-}
-
-
-function invalidateMonthCache(
-  dateStr
-){
-
-  if(!dateStr) return;
-
-
-  const month =
-    dateStr.substring(
-      0,
-      7
-    );
-
-
-  state.monthCache.delete(
-    month
-  );
-
-}
-
 
 /* =========================================================
    COMPUTE STATS
@@ -1759,47 +1665,35 @@ function computeStats(signals){
 
   signals = signals || [];
 
-
   const total =
     signals.filter(
-      s =>
-        s.result !== 'NO SIGNAL'
+      s => s.result !== 'NO SIGNAL'
     ).length;
-
 
   const tp1 =
     signals.filter(
-      s =>
-        s.result === 'TP1'
+      s => s.result === 'TP1'
     ).length;
-
 
   const tp2 =
     signals.filter(
-      s =>
-        s.result === 'TP2'
+      s => s.result === 'TP2'
     ).length;
-
 
   const sl =
     signals.filter(
-      s =>
-        s.result === 'SL'
+      s => s.result === 'SL'
     ).length;
-
 
   const totalPnl =
     signals.reduce(
       (sum,s)=>
-        sum +
-        (parseFloat(s.pnl)||0),
+        sum + (parseFloat(s.pnl)||0),
       0
     );
 
-
   const decided =
     tp1 + tp2 + sl;
-
 
   const winrate =
     decided
@@ -1807,7 +1701,6 @@ function computeStats(signals){
           ((tp1+tp2)/decided)*1000
         )/10
       : 0;
-
 
   return {
     total,
@@ -1828,28 +1721,19 @@ function computeStats(signals){
 function resultClass(result){
 
   if(result === 'SL'){
-
     return 'sl';
-
   }
-
 
   if(
     result === 'TP1' ||
     result === 'TP2'
   ){
-
     return 'tp';
-
   }
-
 
   if(result === 'PENDING'){
-
     return 'pending';
-
   }
-
 
   return 'none';
 
@@ -1865,55 +1749,32 @@ async function renderDaily(){
   const dateStr =
     state.selectedDate;
 
-
-  if(!dateStr){
-
-    return;
-
-  }
-
-
   document.getElementById(
     'dateInput'
-  ).value =
-    dateStr;
+  ).value = dateStr;
 
 
-  /*
-     Tampilkan UI tanggal terlebih dahulu.
-     Jadi user tidak merasa website hang.
-  */
+  const latest =
+    await findLatestDate();
+
 
   document.getElementById(
-    'heroPeriod'
-  ).textContent =
-    fmtDateLabel(dateStr)
-    +' · 07.00 — 02.00 WIB';
+    'latestBadgeWrap'
+  ).innerHTML =
+
+    latest === dateStr
+
+      ? '<span class="latest-badge">● Tanggal terupdate</span>'
+
+      : '';
 
 
   const data =
     await loadDay(dateStr);
 
 
-  /*
-     Request sebelumnya mungkin sudah dibatalkan
-     karena user pindah tanggal lagi.
-  */
-
-  if(
-    !data ||
-    dateStr !== state.selectedDate
-  ){
-
-    return;
-
-  }
-
-
   const stats =
-    computeStats(
-      data.signals
-    );
+    computeStats(data.signals);
 
 
   document.getElementById(
@@ -1926,45 +1787,42 @@ async function renderDaily(){
 
   document.getElementById(
     'statTotal'
-  ).textContent =
-    stats.total;
+  ).textContent = stats.total;
 
 
   document.getElementById(
     'statTp1'
-  ).textContent =
-    stats.tp1;
+  ).textContent = stats.tp1;
 
 
   document.getElementById(
     'statTp2'
-  ).textContent =
-    stats.tp2;
+  ).textContent = stats.tp2;
 
 
   document.getElementById(
     'statSl'
+  ).textContent = stats.sl;
+
+
+  document.getElementById(
+    'heroPeriod'
   ).textContent =
-    stats.sl;
+
+    fmtDateLabel(dateStr)
+    +' · 07.00 — 02.00 WIB';
 
 
   const pnlEl =
-    document.getElementById(
-      'statPnl'
-    );
+    document.getElementById('statPnl');
 
 
   pnlEl.textContent =
-    fmtPnl(
-      stats.totalPnl
-    );
+    fmtPnl(stats.totalPnl);
 
 
   pnlEl.className =
-    'val '+
-    pnlClass(
-      stats.totalPnl
-    );
+    'val '+pnlClass(stats.totalPnl);
 
 
   renderSignalsList(
@@ -1972,9 +1830,32 @@ async function renderDaily(){
   );
 
 
-  renderAdminDailyPanel(
-    data
-  );
+  const shotWrap =
+    document.getElementById(
+      'shotWrap'
+    );
+
+
+  shotWrap.innerHTML =
+    data.screenshot
+
+      ? `
+        <div class="shot-frame">
+          <img
+            src="${data.screenshot}"
+            alt="Bukti PnL MT5"
+          >
+        </div>
+      `
+
+      : `
+        <div class="shot-empty">
+          Belum ada screenshot untuk tanggal ini
+        </div>
+      `;
+
+
+  renderAdminDailyPanel(data);
 
 }
 
@@ -1983,9 +1864,7 @@ async function renderDaily(){
    SIGNAL LIST
 ========================================================= */
 
-function renderSignalsList(
-  signals
-){
+function renderSignalsList(signals){
 
   const wrap =
     document.getElementById(
@@ -1996,9 +1875,7 @@ function renderSignalsList(
   if(!signals.length){
 
     wrap.innerHTML =
-      '<div class="signals-empty">'+
-      'Belum ada sinyal untuk tanggal ini'+
-      '</div>';
+      '<div class="signals-empty">Belum ada sinyal untuk tanggal ini</div>';
 
     return;
 
@@ -2014,6 +1891,16 @@ function renderSignalsList(
         )
     );
 
+
+  /*
+     SATU HARGA HASIL SAJA
+
+     Jika TP1 -> harga TP1
+     Jika TP2 -> harga TP2
+     Jika SL  -> harga SL
+     Jika PENDING -> harga pending
+     Jika NO SIGNAL -> -
+  */
 
   const head = `
 
@@ -2043,100 +1930,82 @@ function renderSignalsList(
 
 
   const rows =
-    sorted.map(
-      s=>{
+    sorted.map(s=>{
 
-        const result =
-          s.result ||
-          'NO SIGNAL';
+      const result =
+        s.result || 'NO SIGNAL';
 
 
-        const resultPrice =
-          fmtPrice(
-            s.resultPrice ??
-            s.tpSlPrice ??
-            s.targetPrice ??
-            ''
-          );
+      const resultPrice =
+        fmtPrice(
+          s.resultPrice ??
+          s.tpSlPrice ??
+          s.targetPrice ??
+          ''
+        );
 
 
-        const pnl =
-          parseFloat(
-            s.pnl
-          ) || 0;
+      const pnl =
+        parseFloat(s.pnl) || 0;
 
 
-        const isNoSignal =
-          result ===
-          'NO SIGNAL';
+      const isNoSignal =
+        result === 'NO SIGNAL';
 
 
-        return `
+      return `
 
-          <div class="signal-row">
+        <div class="signal-row">
 
-            <span>
-              ${s.time || '-'}
-            </span>
+          <span>
+            ${s.time || '-'}
+          </span>
 
-            <span class="dir ${
-              s.direction === 'SELL'
-                ? 'sell'
-                : 'buy'
-            }">
+          <span class="dir ${
+            s.direction === 'SELL'
+              ? 'sell'
+              : 'buy'
+          }">
+            ${
+              isNoSignal
+                ? '-'
+                : (s.direction || '-')
+            }
+          </span>
 
-              ${
-                isNoSignal
-                  ? '-'
-                  : (s.direction || '-')
-              }
+          <span>
+            ${
+              isNoSignal
+                ? '-'
+                : fmtPrice(s.entryPrice)
+            }
+          </span>
 
-            </span>
+          <span class="res ${
+            resultClass(result)
+          }">
+            ${result}
+          </span>
 
-            <span>
+          <span class="price">
+            ${
+              isNoSignal
+                ? '-'
+                : resultPrice
+            }
+          </span>
 
-              ${
-                isNoSignal
-                  ? '-'
-                  : fmtPrice(
-                      s.entryPrice
-                    )
-              }
+          <span class="pnl ${
+            pnlClass(pnl)
+          }">
+            ${fmtPnl(pnl)}
+          </span>
 
-            </span>
+        </div>
 
-            <span class="res ${
-              resultClass(result)
-            }">
+      `;
 
-              ${result}
-
-            </span>
-
-            <span class="price">
-
-              ${
-                isNoSignal
-                  ? '-'
-                  : resultPrice
-              }
-
-            </span>
-
-            <span class="pnl ${
-              pnlClass(pnl)
-            }">
-
-              ${fmtPnl(pnl)}
-
-            </span>
-
-          </div>
-
-        `;
-
-      }
-    ).join('');
+    }).join('');
 
 
   wrap.innerHTML =
@@ -2149,9 +2018,7 @@ function renderSignalsList(
    ADMIN PANEL
 ========================================================= */
 
-function renderAdminDailyPanel(
-  data
-){
+function renderAdminDailyPanel(data){
 
   const panel =
     document.getElementById(
@@ -2177,11 +2044,7 @@ function renderAdminDailyPanel(
     <div class="admin-panel">
 
       <h3>
-        Tambah sinyal — ${
-          fmtDateLabel(
-            state.selectedDate
-          )
-        }
+        Tambah sinyal — ${fmtDateLabel(state.selectedDate)}
       </h3>
 
 
@@ -2344,6 +2207,56 @@ function renderAdminDailyPanel(
         id="adminSignalList"
       ></div>
 
+
+      <hr class="admin-divider">
+
+
+      <h3>
+        Screenshot PnL (MT5)
+      </h3>
+
+
+      <div class="field">
+
+        <input
+          type="file"
+          id="inFile"
+          accept="image/*"
+          style="display:none;"
+        >
+
+        <label
+          for="inFile"
+          class="file-btn"
+        >
+          Pilih foto
+        </label>
+
+        <span
+          id="fileName"
+          style="
+            font-size:12px;
+            color:var(--paper-dim);
+            margin-left:8px;
+          "
+        ></span>
+
+      </div>
+
+
+      <button
+        class="btn-primary"
+        id="saveShotBtn"
+      >
+        Simpan screenshot
+      </button>
+
+
+      <div
+        class="save-msg"
+        id="saveShotMsg"
+      ></div>
+
     </div>
 
   `;
@@ -2358,18 +2271,15 @@ function renderAdminDailyPanel(
       'inResult'
     );
 
-
   const resultLabel =
     document.getElementById(
       'resultPriceLabel'
     );
 
-
   const resultPriceField =
     document.getElementById(
       'resultPriceField'
     );
-
 
   const resultPriceInput =
     document.getElementById(
@@ -2462,74 +2372,53 @@ function renderAdminDailyPanel(
   ======================================================= */
 
   document
-    .getElementById(
-      'addSignalBtn'
-    )
+    .getElementById('addSignalBtn')
     .addEventListener(
       'click',
       async ()=>{
 
-        const button =
-          document.getElementById(
-            'addSignalBtn'
-          );
-
-
         const time =
           document
-            .getElementById(
-              'inTime'
-            )
+            .getElementById('inTime')
             .value
             .trim();
 
 
         const direction =
           document
-            .getElementById(
-              'inDirection'
-            )
+            .getElementById('inDirection')
             .value;
 
 
         const entryPrice =
           document
-            .getElementById(
-              'inEntryPrice'
-            )
+            .getElementById('inEntryPrice')
             .value
             .trim();
 
 
         const result =
           document
-            .getElementById(
-              'inResult'
-            )
+            .getElementById('inResult')
             .value;
 
 
         const resultPrice =
           document
-            .getElementById(
-              'inResultPrice'
-            )
+            .getElementById('inResultPrice')
             .value
             .trim();
 
 
         const pnl =
           document
-            .getElementById(
-              'inPnl'
-            )
+            .getElementById('inPnl')
             .value;
 
 
         const msg =
-          document.getElementById(
-            'addSignalMsg'
-          );
+          document
+            .getElementById('addSignalMsg');
 
 
         /* NO SIGNAL */
@@ -2566,16 +2455,9 @@ function renderAdminDailyPanel(
         }
 
 
-        button.disabled = true;
-
-        msg.textContent =
-          'Menyimpan...';
-
-
         try{
 
           await apiWrite(
-
             '/api/day/'
             +state.selectedDate
             +'/signal',
@@ -2594,18 +2476,18 @@ function renderAdminDailyPanel(
               entryPrice:
                 result === 'NO SIGNAL'
                   ? ''
-                  : fmtPrice(
-                      entryPrice
-                    ),
+                  : fmtPrice(entryPrice),
 
               result,
+
+              /*
+                 SATU FIELD HARGA SAJA
+              */
 
               resultPrice:
                 result === 'NO SIGNAL'
                   ? ''
-                  : fmtPrice(
-                      resultPrice
-                    ),
+                  : fmtPrice(resultPrice),
 
               pnl:
                 result === 'NO SIGNAL'
@@ -2617,15 +2499,9 @@ function renderAdminDailyPanel(
           );
 
 
-          /*
-             Data tanggal berubah,
-             jadi cache harus dihapus.
-          */
-
           invalidateDayCache(
             state.selectedDate
           );
-
 
           invalidateMonthCache(
             state.selectedDate
@@ -2638,22 +2514,22 @@ function renderAdminDailyPanel(
 
           document.getElementById(
             'inTime'
-          ).value = '';
+          ).value='';
 
 
           document.getElementById(
             'inEntryPrice'
-          ).value = '';
+          ).value='';
 
 
           document.getElementById(
             'inResultPrice'
-          ).value = '';
+          ).value='';
 
 
           document.getElementById(
             'inPnl'
-          ).value = '';
+          ).value='';
 
 
           await renderDaily();
@@ -2664,10 +2540,6 @@ function renderAdminDailyPanel(
           msg.textContent =
             e.message ||
             'Gagal menyimpan, coba lagi.';
-
-        }finally{
-
-          button.disabled = false;
 
         }
 
@@ -2683,6 +2555,117 @@ function renderAdminDailyPanel(
     signals
   );
 
+
+  /* =======================================================
+     SCREENSHOT
+  ======================================================= */
+
+  let pendingScreenshot =
+    data.screenshot || null;
+
+
+  document
+    .getElementById('inFile')
+    .addEventListener(
+      'change',
+      (e)=>{
+
+        const file =
+          e.target.files[0];
+
+        if(!file) return;
+
+
+        document.getElementById(
+          'fileName'
+        ).textContent =
+          file.name;
+
+
+        const reader =
+          new FileReader();
+
+
+        reader.onload =
+          ()=>{
+            pendingScreenshot =
+              reader.result;
+          };
+
+
+        reader.readAsDataURL(file);
+
+      }
+    );
+
+
+  document
+    .getElementById('saveShotBtn')
+    .addEventListener(
+      'click',
+      async ()=>{
+
+        const msg =
+          document.getElementById(
+            'saveShotMsg'
+          );
+
+
+        if(!pendingScreenshot){
+
+          msg.textContent =
+            'Pilih screenshot terlebih dahulu.';
+
+          return;
+
+        }
+
+
+        try{
+
+          await apiWrite(
+
+            '/api/day/'
+            +state.selectedDate
+            +'/screenshot',
+
+            'POST',
+
+            {
+              screenshot:
+                pendingScreenshot
+            }
+
+          );
+
+
+          invalidateDayCache(
+            state.selectedDate
+          );
+
+          invalidateMonthCache(
+            state.selectedDate
+          );
+
+
+          msg.textContent =
+            'Screenshot tersimpan.';
+
+
+          await renderDaily();
+
+
+        }catch(e){
+
+          msg.textContent =
+            e.message ||
+            'Gagal menyimpan, coba lagi.';
+
+        }
+
+      }
+    );
+
 }
 
 
@@ -2690,9 +2673,7 @@ function renderAdminDailyPanel(
    ADMIN SIGNAL LIST
 ========================================================= */
 
-function renderAdminSignalList(
-  signals
-){
+function renderAdminSignalList(signals){
 
   const wrap =
     document.getElementById(
@@ -2723,174 +2704,152 @@ function renderAdminSignalList(
 
 
   wrap.innerHTML =
-    sorted.map(
-      s=>{
+    sorted.map(s=>{
 
-        const result =
-          s.result ||
-          'NO SIGNAL';
+      const result =
+        s.result || 'NO SIGNAL';
 
 
-        const resultPrice =
-          fmtPrice(
-            s.resultPrice ??
-            s.tpSlPrice ??
-            s.targetPrice ??
-            ''
-          );
+      const resultPrice =
+        fmtPrice(
+          s.resultPrice ??
+          s.tpSlPrice ??
+          s.targetPrice ??
+          ''
+        );
 
 
-        const pnl =
-          parseFloat(
-            s.pnl
-          ) || 0;
+      const pnl =
+        parseFloat(s.pnl) || 0;
 
 
-        return `
+      return `
 
-          <div class="admin-signal-item">
+        <div class="admin-signal-item">
 
-            <span>
-              ${s.time || '-'}
-            </span>
+          <span>
+            ${s.time || '-'}
+          </span>
 
-            <span class="dir ${
-              s.direction === 'SELL'
-                ? 'sell'
-                : 'buy'
-            }">
+          <span class="dir ${
+            s.direction === 'SELL'
+              ? 'sell'
+              : 'buy'
+          }">
+            ${
+              result === 'NO SIGNAL'
+                ? '-'
+                : (s.direction || '-')
+            }
+          </span>
 
-              ${
-                result === 'NO SIGNAL'
-                  ? '-'
-                  : (s.direction || '-')
-              }
+          <span>
+            ${
+              result === 'NO SIGNAL'
+                ? '-'
+                : fmtPrice(s.entryPrice)
+            }
+          </span>
 
-            </span>
+          <span class="res ${
+            resultClass(result)
+          }">
+            ${result}
+          </span>
 
-            <span>
+          <span class="price">
+            ${
+              result === 'NO SIGNAL'
+                ? '-'
+                : resultPrice
+            }
+          </span>
 
-              ${
-                result === 'NO SIGNAL'
-                  ? '-'
-                  : fmtPrice(
-                      s.entryPrice
-                    )
-              }
+          <span class="pnl ${
+            pnlClass(pnl)
+          }">
+            ${fmtPnl(pnl)}
+          </span>
 
-            </span>
+          <button
+            class="del-btn"
+            data-id="${s.id}"
+            title="Hapus signal"
+          >
+            ✕
+          </button>
 
-            <span class="res ${
-              resultClass(result)
-            }">
+        </div>
 
-              ${result}
+      `;
 
-            </span>
-
-            <span class="price">
-
-              ${
-                result === 'NO SIGNAL'
-                  ? '-'
-                  : resultPrice
-              }
-
-            </span>
-
-            <span class="pnl ${
-              pnlClass(pnl)
-            }">
-
-              ${fmtPnl(pnl)}
-
-            </span>
-
-            <button
-              class="del-btn"
-              data-id="${s.id}"
-              title="Hapus signal"
-            >
-              ✕
-            </button>
-
-          </div>
-
-        `;
-
-      }
-    ).join('');
+    }).join('');
 
 
   wrap
-    .querySelectorAll(
-      '.del-btn'
-    )
-    .forEach(
-      btn=>{
+    .querySelectorAll('.del-btn')
+    .forEach(btn=>{
 
-        btn.addEventListener(
-          'click',
-          async ()=>{
+      btn.addEventListener(
+        'click',
+        async ()=>{
 
-            const id =
-              btn.getAttribute(
-                'data-id'
-              );
+          const id =
+            btn.getAttribute(
+              'data-id'
+            );
 
 
-            if(
-              !confirm(
-                'Hapus signal ini?'
-              )
-            ){
+          if(
+            !confirm(
+              'Hapus signal ini?'
+            )
+          ){
 
-              return;
-
-            }
-
-
-            try{
-
-              await apiWrite(
-
-                '/api/day/'
-                +state.selectedDate
-                +'/signal/'
-                +id,
-
-                'DELETE'
-
-              );
-
-
-              invalidateDayCache(
-                state.selectedDate
-              );
-
-
-              invalidateMonthCache(
-                state.selectedDate
-              );
-
-
-              await renderDaily();
-
-
-            }catch(e){
-
-              alert(
-                e.message ||
-                'Gagal menghapus, coba lagi.'
-              );
-
-            }
+            return;
 
           }
-        );
 
-      }
-    );
+
+          try{
+
+            await apiWrite(
+
+              '/api/day/'
+              +state.selectedDate
+              +'/signal/'
+              +id,
+
+              'DELETE'
+
+            );
+
+
+            invalidateDayCache(
+              state.selectedDate
+            );
+
+            invalidateMonthCache(
+              state.selectedDate
+            );
+
+
+            await renderDaily();
+
+
+          }catch(e){
+
+            alert(
+              e.message ||
+              'Gagal menghapus, coba lagi.'
+            );
+
+          }
+
+        }
+      );
+
+    });
 
 }
 
@@ -2905,34 +2864,13 @@ async function renderMonthly(){
     state.selectedMonth;
 
 
-  if(!monthStr){
-
-    return;
-
-  }
-
-
   document.getElementById(
     'monthInput'
-  ).value =
-    monthStr;
+  ).value = monthStr;
 
 
   const monthData =
-    await loadMonth(
-      monthStr
-    );
-
-
-  if(
-    monthData === null ||
-    monthStr !==
-    state.selectedMonth
-  ){
-
-    return;
-
-  }
+    await loadMonth(monthStr);
 
 
   let total=0;
@@ -2946,29 +2884,27 @@ async function renderMonthly(){
 
 
   Object.keys(monthData)
-    .forEach(
-      d=>{
+    .forEach(d=>{
 
-        const s =
-          computeStats(
-            monthData[d].signals
-          );
-
-
-        total += s.total;
-        tp1 += s.tp1;
-        tp2 += s.tp2;
-        sl += s.sl;
-        totalPnl += s.totalPnl;
+      const s =
+        computeStats(
+          monthData[d].signals
+        );
 
 
-        rows.push({
-          date:d,
-          stats:s
-        });
+      total += s.total;
+      tp1 += s.tp1;
+      tp2 += s.tp2;
+      sl += s.sl;
+      totalPnl += s.totalPnl;
 
-      }
-    );
+
+      rows.push({
+        date:d,
+        stats:s
+      });
+
+    });
 
 
   const decided =
@@ -2993,26 +2929,22 @@ async function renderMonthly(){
 
   document.getElementById(
     'monthTotal'
-  ).textContent =
-    total;
+  ).textContent = total;
 
 
   document.getElementById(
     'monthTp1'
-  ).textContent =
-    tp1;
+  ).textContent = tp1;
 
 
   document.getElementById(
     'monthTp2'
-  ).textContent =
-    tp2;
+  ).textContent = tp2;
 
 
   document.getElementById(
     'monthSl'
-  ).textContent =
-    sl;
+  ).textContent = sl;
 
 
   const monthPnlEl =
@@ -3022,16 +2954,11 @@ async function renderMonthly(){
 
 
   monthPnlEl.textContent =
-    fmtPnl(
-      totalPnl
-    );
+    fmtPnl(totalPnl);
 
 
   monthPnlEl.className =
-    'val '+
-    pnlClass(
-      totalPnl
-    );
+    'val '+pnlClass(totalPnl);
 
 
   const ledger =
@@ -3043,9 +2970,7 @@ async function renderMonthly(){
   if(rows.length===0){
 
     ledger.innerHTML =
-      '<div class="ledger-empty">'+
-      'Belum ada data pada bulan ini'+
-      '</div>';
+      '<div class="ledger-empty">Belum ada data pada bulan ini</div>';
 
     return;
 
@@ -3061,85 +2986,65 @@ async function renderMonthly(){
 
 
   ledger.innerHTML =
-    rows.map(
-      r=>{
+    rows.map(r=>{
 
-        return `
+      return `
 
-          <div
-            class="ledger-row"
-            data-date="${r.date}"
-          >
+        <div
+          class="ledger-row"
+          data-date="${r.date}"
+        >
 
-            <div class="ledger-date">
-              ${r.date}
-            </div>
+          <div class="ledger-date">
+            ${r.date}
+          </div>
 
-            <div class="ledger-mid">
+          <div class="ledger-mid">
 
-              <span>
-                ${r.stats.total} sinyal
-              </span>
+            <span>
+              ${r.stats.total} sinyal
+            </span>
 
-              <span>
-                TP ${
-                  r.stats.tp1 +
-                  r.stats.tp2
-                }
-              </span>
+            <span>
+              TP ${r.stats.tp1+r.stats.tp2}
+            </span>
 
-              <span>
-                SL ${r.stats.sl}
-              </span>
-
-            </div>
-
-            <div class="ledger-win">
-              ${r.stats.winrate}%
-            </div>
+            <span>
+              SL ${r.stats.sl}
+            </span>
 
           </div>
 
-        `;
+          <div class="ledger-win">
+            ${r.stats.winrate}%
+          </div>
 
-      }
-    ).join('');
+        </div>
+
+      `;
+
+    }).join('');
 
 
   ledger
-    .querySelectorAll(
-      '.ledger-row'
-    )
-    .forEach(
-      row=>{
+    .querySelectorAll('.ledger-row')
+    .forEach(row=>{
 
-        row.addEventListener(
-          'click',
-          ()=>{
+      row.addEventListener(
+        'click',
+        ()=>{
 
-            state.selectedDate =
-              row.getAttribute(
-                'data-date'
-              );
-
-
-            state.selectedMonth =
-              state.selectedDate
-                .substring(
-                  0,
-                  7
-                );
-
-
-            switchView(
-              'daily'
+          state.selectedDate =
+            row.getAttribute(
+              'data-date'
             );
 
-          }
-        );
+          switchView('daily');
 
-      }
-    );
+        }
+      );
+
+    });
 
 }
 
@@ -3150,18 +3055,16 @@ async function renderMonthly(){
 
 function switchView(view){
 
-  state.view =
-    view;
+  state.view = view;
 
 
   document
     .querySelectorAll('.tab')
-    .forEach(
-      t=>
-        t.classList.toggle(
-          'active',
-          t.dataset.view === view
-        )
+    .forEach(t=>
+      t.classList.toggle(
+        'active',
+        t.dataset.view===view
+      )
     );
 
 
@@ -3256,23 +3159,17 @@ function showLoginModal(){
 
 
   document
-    .getElementById(
-      'pwCancel'
-    )
+    .getElementById('pwCancel')
     .addEventListener(
       'click',
       ()=>{
-
         root.innerHTML='';
-
       }
     );
 
 
   document
-    .getElementById(
-      'modalBg'
-    )
+    .getElementById('modalBg')
     .addEventListener(
       'click',
       (e)=>{
@@ -3291,29 +3188,15 @@ function showLoginModal(){
 
 
   document
-    .getElementById(
-      'pwSubmit'
-    )
+    .getElementById('pwSubmit')
     .addEventListener(
       'click',
       async ()=>{
 
         const val =
           document
-            .getElementById(
-              'pwInput'
-            )
+            .getElementById('pwInput')
             .value;
-
-
-        const submit =
-          document.getElementById(
-            'pwSubmit'
-          );
-
-
-        submit.disabled =
-          true;
 
 
         try{
@@ -3322,7 +3205,6 @@ function showLoginModal(){
             await fetch(
               '/api/admin/verify',
               {
-
                 method:'POST',
 
                 headers:{
@@ -3334,7 +3216,6 @@ function showLoginModal(){
                   JSON.stringify({
                     password:val
                   })
-
               }
             );
 
@@ -3347,7 +3228,6 @@ function showLoginModal(){
 
             state.isAdmin =
               true;
-
 
             state.adminPassword =
               val;
@@ -3364,7 +3244,6 @@ function showLoginModal(){
 
             renderAdminUI();
 
-
             renderDaily();
 
 
@@ -3374,7 +3253,6 @@ function showLoginModal(){
               'pwError'
             ).textContent =
               'Kata sandi salah.';
-
 
           }
 
@@ -3386,12 +3264,6 @@ function showLoginModal(){
           ).textContent =
             'Gagal menghubungi server.';
 
-
-        }finally{
-
-          submit.disabled =
-            false;
-
         }
 
       }
@@ -3399,9 +3271,7 @@ function showLoginModal(){
 
 
   document
-    .getElementById(
-      'pwInput'
-    )
+    .getElementById('pwInput')
     .addEventListener(
       'keydown',
       (e)=>{
@@ -3447,9 +3317,7 @@ function renderAdminUI(){
 
 
   document
-    .getElementById(
-      'adminToggleBtn'
-    )
+    .getElementById('adminToggleBtn')
     .addEventListener(
       'click',
       ()=>{
@@ -3458,14 +3326,11 @@ function renderAdminUI(){
 
         state.adminPassword=null;
 
-
         sessionStorage.removeItem(
           'admin_pw'
         );
 
-
         renderLogoutUI();
-
 
         renderDaily();
 
@@ -3496,9 +3361,7 @@ function renderLogoutUI(){
 
 
   document
-    .getElementById(
-      'adminToggleBtn'
-    )
+    .getElementById('adminToggleBtn')
     .addEventListener(
       'click',
       showLoginModal
@@ -3517,11 +3380,6 @@ async function init(){
     new Date();
 
 
-  /*
-     Hanya panggil /api/latest SATU KALI
-     saat website pertama dibuka.
-  */
-
   const latest =
     await findLatestDate();
 
@@ -3531,8 +3389,7 @@ async function init(){
 
 
   state.selectedDate =
-    latest ||
-    todayStr;
+    latest || todayStr;
 
 
   state.selectedMonth =
@@ -3558,7 +3415,6 @@ async function init(){
         await fetch(
           '/api/admin/verify',
           {
-
             method:'POST',
 
             headers:{
@@ -3570,7 +3426,6 @@ async function init(){
               JSON.stringify({
                 password:savedPw
               })
-
           }
         );
 
@@ -3581,10 +3436,9 @@ async function init(){
 
       if(data.ok){
 
-        state.isAdmin =
-          true;
+        state.isAdmin=true;
 
-        state.adminPassword =
+        state.adminPassword=
           savedPw;
 
       }
@@ -3612,67 +3466,30 @@ async function init(){
   }
 
 
-  /*
-     TAB
-  */
-
   document
     .querySelectorAll('.tab')
-    .forEach(
-      t=>{
+    .forEach(t=>{
 
-        t.addEventListener(
-          'click',
-          ()=>{
+      t.addEventListener(
+        'click',
+        ()=>{
+          switchView(
+            t.dataset.view
+          );
+        }
+      );
 
-            switchView(
-              t.dataset.view
-            );
+    });
 
-          }
-        );
-
-      }
-    );
-
-
-  /*
-     DATE INPUT
-  */
 
   document
-    .getElementById(
-      'dateInput'
-    )
+    .getElementById('dateInput')
     .addEventListener(
       'change',
       (e)=>{
 
-        const value =
-          e.target.value;
-
-
-        if(!value){
-
-          return;
-
-        }
-
-
         state.selectedDate =
-          value;
-
-
-        state.selectedMonth =
-          value.substring(
-            0,
-            7
-          );
-
-
-        /*
-           Langsung render.
-        */
+          e.target.value;
 
         renderDaily();
 
@@ -3680,14 +3497,8 @@ async function init(){
     );
 
 
-  /*
-     PREVIOUS DAY
-  */
-
   document
-    .getElementById(
-      'prevDay'
-    )
+    .getElementById('prevDay')
     .addEventListener(
       'click',
       ()=>{
@@ -3708,24 +3519,14 @@ async function init(){
           toDateStr(d);
 
 
-        state.selectedMonth =
-          toMonthStr(d);
-
-
         renderDaily();
 
       }
     );
 
 
-  /*
-     NEXT DAY
-  */
-
   document
-    .getElementById(
-      'nextDay'
-    )
+    .getElementById('nextDay')
     .addEventListener(
       'click',
       ()=>{
@@ -3746,42 +3547,20 @@ async function init(){
           toDateStr(d);
 
 
-        state.selectedMonth =
-          toMonthStr(d);
-
-
         renderDaily();
 
       }
     );
 
 
-  /*
-     MONTH
-  */
-
   document
-    .getElementById(
-      'monthInput'
-    )
+    .getElementById('monthInput')
     .addEventListener(
       'change',
       (e)=>{
 
-        const value =
-          e.target.value;
-
-
-        if(!value){
-
-          return;
-
-        }
-
-
         state.selectedMonth =
-          value;
-
+          e.target.value;
 
         renderMonthly();
 
@@ -3789,14 +3568,8 @@ async function init(){
     );
 
 
-  /*
-     PREVIOUS MONTH
-  */
-
   document
-    .getElementById(
-      'prevMonth'
-    )
+    .getElementById('prevMonth')
     .addEventListener(
       'click',
       ()=>{
@@ -3825,14 +3598,8 @@ async function init(){
     );
 
 
-  /*
-     NEXT MONTH
-  */
-
   document
-    .getElementById(
-      'nextMonth'
-    )
+    .getElementById('nextMonth')
     .addEventListener(
       'click',
       ()=>{
@@ -3860,10 +3627,6 @@ async function init(){
       }
     );
 
-
-  /*
-     Tampilkan data awal.
-  */
 
   renderDaily();
 
